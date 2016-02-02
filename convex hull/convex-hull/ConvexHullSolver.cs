@@ -109,7 +109,7 @@ namespace _2_convex_hull
         /**
         * This function is to find the upper common tangent
         */
-        void findUpperCommonTangent(List<System.Drawing.PointF> list_first_half,
+        void findUpperCommonTangent(ref PointF upperLeft, ref PointF upperRight, List<System.Drawing.PointF> list_first_half,
                                     List<System.Drawing.PointF> list_second_half)
         {
             bool upperTangentToBoth = false;
@@ -119,21 +119,25 @@ namespace _2_convex_hull
             bool iteratedOnRight = false;
             PointF rightMostIter = list_first_half[0];
             PointF leftMostIter = list_second_half[0];
-            PointF upperLeft = rightMostIter;
-            PointF upperRight = leftMostIter;
             int indexOnLeftHullList = 0; // where 0 is the right most point
             int indexOnRightHullList = 0; // where 0 is the left most point
             while (!upperTangentToBoth)
             {
                 iteratedOnLeft = false;
                 iteratedOnRight = false;
-                double oldSlope = computeSlope(rightMostIter, leftMostIter);
+                double oldSlope = computeSlope(upperLeft, upperRight);
                 while (!upperTangentToLeft && indexOnLeftHullList < list_first_half.Count-1)
                 {
                     // Move counter clock wise on left hull
                     indexOnLeftHullList++;
-                    double newSlope = computeSlope(list_first_half[indexOnLeftHullList], leftMostIter);
-                    if (newSlope - oldSlope < 0) // slope is decreasing
+                    double newSlope = computeSlope(list_first_half[indexOnLeftHullList], upperRight);
+                    Console.WriteLine("Moving counter clock wise on left hull");
+                    Console.WriteLine("old slope: From (" + upperLeft.X + "," + upperLeft.Y + ") to (" + upperRight.X +
+                                        "," + upperRight.Y + ") is " + oldSlope);
+                    Console.WriteLine("new slope: From (" + list_first_half[indexOnLeftHullList].X + "," +
+                                    list_first_half[indexOnLeftHullList].Y + ") to (" + upperRight.X +
+                                        "," + upperRight.Y + ") is " + newSlope);
+                    if (newSlope - oldSlope > 0) // slope is increasing
                     {
                         iteratedOnLeft = true;
                         if (list_first_half.Count > 2)
@@ -153,13 +157,20 @@ namespace _2_convex_hull
                     }
                 }
                 upperTangentToLeft = true;
-                oldSlope = computeSlope(upperRight, rightMostIter);
+                oldSlope = computeSlope(upperRight, upperLeft);
                 while (!upperTangentToRight && indexOnRightHullList < list_second_half.Count-1)
                 {
+
                     // Move Clock wise on right hull
                     indexOnRightHullList++;
-                    double newSlope = computeSlope(list_second_half[indexOnRightHullList], rightMostIter);
-                    if (newSlope - oldSlope > 0) // slope is increasing
+                    double newSlope = computeSlope(list_second_half[indexOnRightHullList], upperLeft);
+                    Console.WriteLine("Moving clock wise on right hull");
+                    Console.WriteLine("old slope: From (" + upperRight.X + "," + upperRight.Y + ") to (" + upperLeft.X +
+                                        "," + upperLeft.Y + ") is " + oldSlope);
+                    Console.WriteLine("new slope: From (" + list_second_half[indexOnRightHullList].X + "," +
+                                    list_second_half[indexOnRightHullList].Y + ") to (" + upperLeft.X +
+                                        "," + upperLeft.Y + ") is " + newSlope);
+                    if (newSlope - oldSlope < 0) // slope is decreasing
                     {
                         iteratedOnRight = true;
                         if (list_second_half.Count > 2)
@@ -191,7 +202,7 @@ namespace _2_convex_hull
         /**
        * This function is to find the lower common tangent
        */
-        void findLowerCommonTangent(List<System.Drawing.PointF> list_first_half,
+        void findLowerCommonTangent(PointF upperLeft, PointF upperRight, List<System.Drawing.PointF> list_first_half,
                                     List<System.Drawing.PointF> list_second_half)
         {
             bool lowerTangentToBoth = false;
@@ -209,16 +220,16 @@ namespace _2_convex_hull
             {
                 iteratedOnRight = false;
                 iteratedOnLeft = false;
-                double oldSlope = computeSlope(lowerLeft, leftMostIter);
+                double oldSlope = computeSlope(lowerLeft, lowerRight);
                 while (!lowerTangentToLeft && indexOnLeftHullList < list_first_half.Count-1)
                 {
                     // Move clock wise on left hull
                     indexOnLeftHullList++;
-                    double newSlope = computeSlope(list_first_half[indexOnLeftHullList], leftMostIter);
-                    if (newSlope - oldSlope > 0) // slope is increasing
+                    double newSlope = computeSlope(list_first_half[indexOnLeftHullList], lowerRight);
+                    if (newSlope - oldSlope < 0) // slope is decreasing
                     {
                         iteratedOnLeft = true;
-                        if (list_first_half.Count > 2)
+                        if (list_first_half[indexOnLeftHullList] == upperLeft || list_first_half.Count > 2)
                         {
                             // erase the line between the two points
                             Pen whitePen = new Pen(Color.White, 3);
@@ -235,16 +246,16 @@ namespace _2_convex_hull
                     }
                 }
                 lowerTangentToLeft = true;
-                oldSlope = computeSlope(lowerRight, rightMostIter);
+                oldSlope = computeSlope(lowerRight, lowerLeft);
                 while (!lowerTangentToRight && indexOnRightHullList < list_second_half.Count-1)
                 {
                     // Move Clock wise on right hull
                     indexOnRightHullList++;
-                    double newSlope = computeSlope(list_second_half[indexOnRightHullList], rightMostIter);
-                    if (newSlope - oldSlope < 0) // slope is decreasing
+                    double newSlope = computeSlope(list_second_half[indexOnRightHullList], lowerLeft);
+                    if (newSlope - oldSlope > 0) // slope is increasing
                     {
                         iteratedOnRight = true;
-                        if (list_second_half.Count > 2)
+                        if (list_second_half[indexOnRightHullList] == upperRight || list_second_half.Count > 2)
                         {
                             // erase the line between the two points
                             Pen whitePen = new Pen(Color.White, 3);
@@ -282,7 +293,7 @@ namespace _2_convex_hull
         void orderListsToNavigateUp(PointF leftMostIter, PointF rightMostIter, 
                                    ref List<System.Drawing.PointF> firstList, ref List<System.Drawing.PointF> secondList)
         {
-            //order the first half of the list in counter clock wise order --> increasing slope from rightmost
+            //order the first half of the list in counter clock wise order --> decreasing slope from rightmost
             firstList.Sort(delegate (PointF first, PointF second)
             {
                 if (first == rightMostIter) return -1;
@@ -295,7 +306,7 @@ namespace _2_convex_hull
                 }
             });
 
-            // order the second half of the list in clock wise order --> decreasing slope from leftmost
+            // order the second half of the list in clock wise order --> increasing slope from leftmost
             secondList.Sort(delegate (PointF first, PointF second)
             {
                 if (first == leftMostIter) return -1;
@@ -315,7 +326,7 @@ namespace _2_convex_hull
         void orderListsToNavigateDown(PointF leftMostIter, PointF rightMostIter,
                                    ref List<System.Drawing.PointF> firstList, ref List<System.Drawing.PointF> secondList)
         {
-            // order the first half of the list in clock wise order --> decreasing slope from rightmost
+            // order the first half of the list in clock wise order --> increasing slope from rightmost
             firstList.Sort(delegate (PointF first, PointF second)
             {
                 if (first == rightMostIter) return -1;
@@ -328,7 +339,7 @@ namespace _2_convex_hull
                 }
             });
 
-            // order the second half of the list in clock wise order --> increasing slope from leftmost
+            // order the second half of the list in clock wise order --> decreasing slope from leftmost
             secondList.Sort(delegate (PointF first, PointF second)
             {
                 if (first == leftMostIter) return -1;
@@ -383,14 +394,16 @@ namespace _2_convex_hull
                 // Find the upper common tangent
                 PointF rightMostIter = list_first_half[indexOfRightMost];
                 PointF leftMostIter = list_second_half[indexOfLeftMost];
+                PointF upperLeft = rightMostIter;
+                PointF upperRight = leftMostIter;
 
                 // find the upper common tangent and draw that line
                 orderListsToNavigateUp(leftMostIter, rightMostIter, ref list_first_half, ref list_second_half);
-                findUpperCommonTangent(list_first_half, list_second_half);
+                findUpperCommonTangent(ref upperLeft, ref upperRight, list_first_half, list_second_half);
 
                 // find the lower common tangent and draw that line
                 orderListsToNavigateDown(leftMostIter, rightMostIter, ref list_first_half, ref list_second_half);
-                findLowerCommonTangent(list_first_half, list_second_half);
+                findLowerCommonTangent(upperLeft, upperRight, list_first_half, list_second_half);
 
                 return pointList;
 
