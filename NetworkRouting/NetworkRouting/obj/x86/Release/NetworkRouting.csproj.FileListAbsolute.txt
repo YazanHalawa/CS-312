@@ -1,0 +1,16 @@
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.exe.config
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.exe.manifest
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.application
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.exe
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.pdb
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.csprojResolveAssemblyReference.cache
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.Form1.resources
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.Properties.Resources.resources
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.csproj.GenerateResource.Cache
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.exe.manifest
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.application
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.exe
+\\vmware-host\Shared Folders\My Projects Code\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.pdb
+C:\Users\Dan\Desktop\NetworkRouting\NetworkRouting\bin\Release\NetworkRouting.exe.config
+C:\Users\Dan\Desktop\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.exe
+C:\Users\Dan\Desktop\NetworkRouting\NetworkRouting\obj\x86\Release\NetworkRouting.pdb
