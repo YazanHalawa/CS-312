@@ -160,9 +160,219 @@ namespace NetworkRouting
             }
         }
 
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////// Priority Queue ////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public abstract class PriorityQueue
+        {
+            private int count;
+
+            public PriorityQueue(){}
+
+            public abstract void makeQueue(int numOfNodes);
+
+            public abstract int deleteMin();
+
+            public abstract void decreaseKey(int targetIndex, double newKey);
+
+            public abstract void insert(int elementIndex, double value);
+
+            public abstract double getDistance(int index);
+
+            public int getCount()
+            {
+                return count;
+            }
+
+        }
+
+        public class PriorityQueueArray : PriorityQueue
+        {
+            private double[] queue;
+            private int count;
+
+            public PriorityQueueArray()
+            {
+            }
+
+            public override void makeQueue(int numOfNodes)
+            {
+                queue = new double[numOfNodes];
+                for (int i = 0; i < numOfNodes; i++)
+                {
+                    queue[i] = int.MaxValue;
+                }
+                count = numOfNodes;
+            }
+
+            public override int deleteMin()
+            {
+                double min = int.MaxValue;
+                int minIndex = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    if (queue[i] < min)
+                    {
+                        min = queue[i];
+                        minIndex = i;
+                    }
+                }
+                count--;
+                queue[minIndex] = int.MaxValue;
+                return minIndex;
+            }
+
+            public override void decreaseKey(int targetIndex, double newKey)
+            {
+                queue[targetIndex] = newKey;
+            }
+
+            public override void insert(int elementIndex, double value)
+            {
+                if (queue[elementIndex] == int.MaxValue)
+                {
+                    queue[elementIndex] = value;
+                    count++;
+                }
+            }
+
+            public override double getDistance(int index)
+            {
+                return queue[index];
+            }
+
+        }
+
+        //public class PriorityQueueHeap : PriorityQueue
+        //{
+        //    public PriorityQueueHeap()
+        //    {
+        //    }
+
+        //    public override void makeQueue(int numOfNodes)
+        //    {
+
+        //    }
+
+        //    public override int deleteMin()
+        //    {
+
+        //    }
+
+        //    public override void decreaseKey(PointF target, double newKey)
+        //    {
+
+        //    }
+
+        //    public override void insert(int elementIndex, double value)
+        //    {
+
+        //    }
+        //}
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////// Helper Functions /////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * Helper function to compute distance between two points
+        */
+        private double computeDistance(PointF point1, PointF point2)
+        {
+            double deltaX = Math.Pow(point2.X - point1.X, 2);
+            double deltaY = Math.Pow(point2.Y - point1.Y, 2);
+            return Math.Sqrt(deltaX + deltaY);
+        }
+
+        /**
+        * Helper function to draw the path between the list of points
+        */
+        private void drawPath(List<int> path)
+        {
+            // Create variables to iterate through the path
+            int currIndex = stopNodeIndex;
+            int prevIndex = currIndex;
+            // Keep looping until the path from start node to end node is drawn
+            while (true)
+            {
+                currIndex = path[currIndex];
+                if (currIndex == -1) // if hit start node, exit cause the path is done
+                    break;
+                // Draw line and label it with the distance
+                Pen black = new Pen(Color.Black, 3);
+                graphics.DrawLine(black, points[currIndex], points[prevIndex]);
+                string drawString = System.Convert.ToString(computeDistance(points[currIndex], points[prevIndex]));
+                System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 16);
+                System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
+                float x = points[currIndex].X - points[prevIndex].X;
+                float y = points[currIndex].Y - points[prevIndex].Y;
+                graphics.DrawString(drawString, drawFont, drawBrush, x, y);
+
+                // Update the iterator
+                prevIndex = currIndex;
+            }
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////  Dijktra's Algorithm ////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * This function will implement Dijkstra's Algorithm
+        */
+        private List<int> Dijkstras()
+        {
+            // Create Queue to track order of points
+            PriorityQueue queue = new PriorityQueueArray();
+            queue.makeQueue(points.Count);
+
+            // Set up prev node list
+            List<int> prev = new List<int>();
+            for (int i = 0; i < points.Count; i++)
+            {
+                prev.Add(-1);
+            }
+
+            // Initilize the start node distance to 0
+            queue.insert(startNodeIndex, 0);
+
+            // Iterate while the queue is not empty
+            while (queue.getCount() != 0)
+            {
+                // Grab the next min cost Point
+                int indexOfMin = queue.deleteMin();
+                PointF u = points[indexOfMin];
+
+                // For all edges coming out of u
+                foreach (int targetIndex in adjacencyList[indexOfMin])
+                {
+                    PointF target = points[targetIndex];
+                    double newDist = queue.getDistance(indexOfMin) + computeDistance(u, target);
+                    if (queue.getDistance(targetIndex) > newDist)
+                    {
+                        prev[targetIndex] = indexOfMin;
+                        queue.decreaseKey(targetIndex, newDist);
+                    }
+                }
+            }
+
+            return prev;
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void solveButton_Clicked()
         {
             // *** Implement this method, use the variables "startNodeIndex" and "stopNodeIndex" as the indices for your start and stop points, respectively ***
+            List<int> path = Dijkstras();
+
+            drawPath(path);
         }
 
         private Boolean startStopToggle = true;
