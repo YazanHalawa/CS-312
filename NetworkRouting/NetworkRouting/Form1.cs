@@ -160,14 +160,12 @@ namespace NetworkRouting
             }
         }
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////// Priority Queue ////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////// Priority Queue ////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public abstract class PriorityQueue
         {
-            private int count;
-
-            public PriorityQueue(){}
+            public PriorityQueue() { }
 
             public abstract void makeQueue(int numOfNodes);
 
@@ -177,12 +175,9 @@ namespace NetworkRouting
 
             public abstract void insert(int elementIndex, double value);
 
-            public abstract double getDistance(int index);
+            public abstract void printQueueContents();
 
-            public int getCount()
-            {
-                return count;
-            }
+            public abstract bool isEmpty();
 
         }
 
@@ -193,6 +188,21 @@ namespace NetworkRouting
 
             public PriorityQueueArray()
             {
+            }
+
+            public override bool isEmpty()
+            {
+                return count == 0;
+            }
+
+            public override void printQueueContents()
+            {
+                Console.Write("The contents of the queue are: ");
+                for (int i = 0; i < count; i++)
+                {
+                    Console.Write(queue[i] + " ");
+                }
+                Console.WriteLine();
             }
 
             public override void makeQueue(int numOfNodes)
@@ -209,7 +219,7 @@ namespace NetworkRouting
             {
                 double min = int.MaxValue;
                 int minIndex = 0;
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < queue.Count(); i++)
                 {
                     if (queue[i] < min)
                     {
@@ -229,46 +239,53 @@ namespace NetworkRouting
 
             public override void insert(int elementIndex, double value)
             {
-                if (queue[elementIndex] == int.MaxValue)
-                {
-                    queue[elementIndex] = value;
-                    count++;
-                }
+                queue[elementIndex] = value;
+                count++;
             }
-
-            public override double getDistance(int index)
-            {
-                return queue[index];
-            }
-
         }
 
-        //public class PriorityQueueHeap : PriorityQueue
-        //{
-        //    public PriorityQueueHeap()
-        //    {
-        //    }
+        public class PriorityQueueHeap : PriorityQueue
+        {
+            private int count;
+            public PriorityQueueHeap()
+            {
+            }
 
-        //    public override void makeQueue(int numOfNodes)
-        //    {
+            public override bool isEmpty()
+            {
+                return count == 0;
+            }
 
-        //    }
+            public override void printQueueContents()
+            {
+                //Console.Write("The contents of the queue are: ");
+                //for (int i = 0; i < count; i++)
+                //{
+                //    Console.Write(queue[i] + " ");
+                //}
+                //Console.WriteLine();
+            }
 
-        //    public override int deleteMin()
-        //    {
+            public override void makeQueue(int numOfNodes)
+            {
 
-        //    }
+            }
 
-        //    public override void decreaseKey(PointF target, double newKey)
-        //    {
+            public override int deleteMin()
+            {
 
-        //    }
+            }
 
-        //    public override void insert(int elementIndex, double value)
-        //    {
+            public override void decreaseKey(int targetIndex, double newKey)
+            {
 
-        //    }
-        //}
+            }
+
+            public override void insert(int elementIndex, double value)
+            {
+
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,11 +297,22 @@ namespace NetworkRouting
         /**
         * Helper function to compute distance between two points
         */
-        private double computeDistance(PointF point1, PointF point2)
+        private int computeDistance(PointF point1, PointF point2)
         {
             double deltaX = Math.Pow(point2.X - point1.X, 2);
             double deltaY = Math.Pow(point2.Y - point1.Y, 2);
-            return Math.Sqrt(deltaX + deltaY);
+            return (int)Math.Sqrt(deltaX + deltaY);
+        }
+
+        /**
+        * Helper function to calculate the midpoint between two points
+        */
+        private PointF findMidPoint(int firstIndex, int secondIndex)
+        {
+            PointF midPoint = new PointF();
+            midPoint.X = (points[secondIndex].X + points[firstIndex].X) / 2;
+            midPoint.Y = (points[secondIndex].Y + points[firstIndex].Y) / 2;
+            return midPoint;
         }
 
         /**
@@ -301,15 +329,13 @@ namespace NetworkRouting
                 currIndex = path[currIndex];
                 if (currIndex == -1) // if hit start node, exit cause the path is done
                     break;
-                // Draw line and label it with the distance
-                Pen black = new Pen(Color.Black, 3);
+                // Draw line
+                Pen black = new Pen(Color.Black, 2);
                 graphics.DrawLine(black, points[currIndex], points[prevIndex]);
-                string drawString = System.Convert.ToString(computeDistance(points[currIndex], points[prevIndex]));
-                System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 16);
-                System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
-                float x = points[currIndex].X - points[prevIndex].X;
-                float y = points[currIndex].Y - points[prevIndex].Y;
-                graphics.DrawString(drawString, drawFont, drawBrush, x, y);
+                
+                // Label it with the distance
+                int distance = computeDistance(points[currIndex], points[prevIndex]);
+                graphics.DrawString(String.Format("{0}", distance), SystemFonts.DefaultFont, Brushes.Black, findMidPoint(prevIndex, currIndex));
 
                 // Update the iterator
                 prevIndex = currIndex;
@@ -331,37 +357,50 @@ namespace NetworkRouting
             // Create Queue to track order of points
             PriorityQueue queue = new PriorityQueueArray();
             queue.makeQueue(points.Count);
-
             // Set up prev node list
             List<int> prev = new List<int>();
+            List<double> dist = new List<double>();
             for (int i = 0; i < points.Count; i++)
             {
                 prev.Add(-1);
+                dist.Add(double.MaxValue);
             }
 
             // Initilize the start node distance to 0
             queue.insert(startNodeIndex, 0);
+            dist[startNodeIndex] = 0;
 
             // Iterate while the queue is not empty
-            while (queue.getCount() != 0)
+            while (!queue.isEmpty())
             {
                 // Grab the next min cost Point
                 int indexOfMin = queue.deleteMin();
+                //Console.WriteLine("index of min is: " + indexOfMin + " and start node index is: " + startNodeIndex);
                 PointF u = points[indexOfMin];
 
                 // For all edges coming out of u
                 foreach (int targetIndex in adjacencyList[indexOfMin])
                 {
                     PointF target = points[targetIndex];
-                    double newDist = queue.getDistance(indexOfMin) + computeDistance(u, target);
-                    if (queue.getDistance(targetIndex) > newDist)
+                    //Console.WriteLine("distance of min node is: " + dist[indexOfMin]);
+                    //Console.WriteLine("distance between target and source is " + computeDistance(u, target));
+                    double newDist = dist[indexOfMin] + computeDistance(u, target);
+                    //Console.WriteLine("old distance is: " + dist[targetIndex] + " and new one is: " + newDist);
+                    if (dist[targetIndex] > newDist)
                     {
                         prev[targetIndex] = indexOfMin;
+                        dist[targetIndex] = newDist;
                         queue.decreaseKey(targetIndex, newDist);
                     }
                 }
+                //queue.printQueueContents();
             }
-
+            //Console.Write("Prev contents: ");
+            //foreach (int index in prev)
+            //{
+            //    Console.Write(index + " ");
+            //}
+            //Console.WriteLine();
             return prev;
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -369,9 +408,8 @@ namespace NetworkRouting
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void solveButton_Clicked()
         {
-            // *** Implement this method, use the variables "startNodeIndex" and "stopNodeIndex" as the indices for your start and stop points, respectively ***
-            List<int> path = Dijkstras();
-
+            //***Implement this method, use the variables "startNodeIndex" and "stopNodeIndex" as the indices for your start and stop points, respectively * **
+            List <int> path = Dijkstras();
             drawPath(path);
         }
 
