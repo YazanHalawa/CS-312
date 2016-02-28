@@ -7,6 +7,7 @@ using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace NetworkRouting
 {
@@ -169,15 +170,17 @@ namespace NetworkRouting
 
             public abstract void makeQueue(int numOfNodes);
 
-            public abstract int deleteMin();
+            public virtual int deleteMin() { return 0; }
+
+            public virtual int deleteMin(ref List<double> distanceArray) { return 0; }
 
             public virtual void decreaseKey(int targetIndex, double newKey) { }
 
-            public virtual void decreaseKey(ref List<double> distanceArray, int targetIndex, double newKey) { }
+            public virtual void decreaseKey(ref List<double> distanceArray, int targetIndex) { }
 
             public virtual void insert(int elementIndex, double value) { }
 
-            public virtual void insert(ref List<double> distanceArray, int elementIndex, int indexToValue) { }
+            public virtual void insert(ref List<double> distanceArray, int elementIndex) { }
 
             public abstract void printQueueContents();
 
@@ -250,6 +253,7 @@ namespace NetworkRouting
 
         public class PriorityQueueHeap : PriorityQueue
         {
+            private int capacity;
             private int count;
             private int[] distances;
             private int[] pointers;
@@ -265,9 +269,9 @@ namespace NetworkRouting
             public override void printQueueContents()
             {
                 Console.Write("The contents of the queue are: ");
-                for (int i = 0; i < distances.Count(); i++)
+                for (int i = 1; i < count; i++)
                 {
-                    if (distances[i] != double.MaxValue)
+                    if (distances[i] != -1)
                         Console.Write(distances[i] + " ");
                 }
                 Console.WriteLine();
@@ -277,49 +281,60 @@ namespace NetworkRouting
             {
                 distances = new int[numOfNodes+1];
                 pointers = new int[numOfNodes];
-                count = 1;
+                for (int i = 1; i < numOfNodes + 1; i++)
+                {
+                    distances[i] = i-1;
+                    pointers[i - 1] = i;
+                }
+                capacity = numOfNodes;
+                count = 0;
             }
 
-            public override int deleteMin()
+            public override int deleteMin(ref List<double> distanceArray)
             {
                 // grab the node with min value which will be at the root
-                double minValue = distances[1];
+                int minValue = distances[1];
                 count--;
 
                 // fix the heap
                 int indexIterator = 1;
-                while (indexIterator < count)
+                while (indexIterator < capacity)
                 {
-                    int smallerElementIndex;
-                    smallerElementIndex = 2*indexIterator;
+                    int smallerElementIndex = 2*indexIterator;
 
                     // if child does not exist, break
-                    if (smallerElementIndex > count)
+                    if (smallerElementIndex > capacity)
                         break;
                     
                     // if right child exists and is of smaller value, pick it
-                    if (smallerElementIndex + 1 <= count && distances[smallerElementIndex] > distances[smallerElementIndex + 1])
+                    if (smallerElementIndex + 1 <= count && distanceArray[distances[smallerElementIndex]] > distanceArray[distances[smallerElementIndex + 1]])
                     {
                         smallerElementIndex++;
                     }
 
                     // set the node's value to that of its smaller child and update the iterator
-                    distances[indexIterator] = distances[smallerElementIndex];
+                    int temp = distances[smallerElementIndex];
+                    distances[smallerElementIndex] = distances[indexIterator];
+                    distances[indexIterator] = temp;
+
+                    pointers[distances[indexIterator]] = smallerElementIndex;
+                    pointers[distances[smallerElementIndex]] = indexIterator;
+
                     indexIterator = smallerElementIndex;
                 }
-
                 // return the min value
-                return (int)minValue;
+                return minValue;
             }
 
-            public override void decreaseKey(ref List<double> distanceArray, int targetIndex, double newKey)
+            public override void decreaseKey(ref List<double> distanceArray, int targetIndex)
             {
                 // find the node with the old value
                 int indexToHeap = pointers[targetIndex];
+                count++;
 
                 // reorder the heap by bubbling up the min to top
                 int indexIterator = indexToHeap;
-                while (indexIterator != 1 && distanceArray[distances[indexIterator / 2]] < distanceArray[distances[indexIterator]])
+                while (indexIterator != 1 && distanceArray[distances[indexIterator / 2]] > distanceArray[distances[indexIterator]])
                 {
                     // swap the two nodes
                     int temp = distances[indexIterator / 2];
@@ -329,29 +344,33 @@ namespace NetworkRouting
                     // update the pointers array
                     pointers[distances[indexIterator / 2]] = indexIterator;
                     pointers[distances[indexIterator]] = indexIterator / 2;
+
+                    indexIterator /= 2;
                 }
 
             }
  
-            public override void insert(ref List<double> distanceArray, int elementIndex, int indexToValue)
+            public override void insert(ref List<double> distanceArray, int elementIndex)
             {
                 // insert the element at the end of the distances array
-                distances[count] = indexToValue;
+                distances[pointers[elementIndex]] = elementIndex;
                 count++;
 
                 // as long as its parent has a smaller value and have not hit the root
-                int indexIterator = count-1;
-                while (indexIterator != 1 && distanceArray[distances[indexIterator/2]] < distanceArray[distances[indexIterator]])
+                int indexIterator = pointers[elementIndex];
+                while (indexIterator != 1 && distanceArray[distances[indexIterator/2]] > distanceArray[distances[indexIterator]])
                 {
                     // swap the two nodes
                     int temp = distances[indexIterator / 2];
                     distances[indexIterator / 2] = distances[indexIterator];
                     distances[indexIterator] = temp;
-                }
 
-                // Insert into the pointers array a mapping from the node to its position in the heap array
-                int indexToHeapArray = indexIterator;
-                pointers[elementIndex] = indexToHeapArray;
+                    // update the pointers array
+                    pointers[distances[indexIterator / 2]] = indexIterator;
+                    pointers[distances[indexIterator]] = indexIterator / 2;
+
+                    indexIterator /= 2;
+                }
             }
         }
 
@@ -365,11 +384,11 @@ namespace NetworkRouting
         /**
         * Helper function to compute distance between two points
         */
-        private int computeDistance(PointF point1, PointF point2)
+        private double computeDistance(PointF point1, PointF point2)
         {
             double deltaX = Math.Pow(point2.X - point1.X, 2);
             double deltaY = Math.Pow(point2.Y - point1.Y, 2);
-            return (int)Math.Sqrt(deltaX + deltaY);
+            return Math.Sqrt(deltaX + deltaY);
         }
 
         /**
@@ -391,6 +410,7 @@ namespace NetworkRouting
             // Create variables to iterate through the path
             int currIndex = stopNodeIndex;
             int prevIndex = currIndex;
+            double totalPathCost = 0;
             // Keep looping until the path from start node to end node is drawn
             while (true)
             {
@@ -402,12 +422,14 @@ namespace NetworkRouting
                 graphics.DrawLine(black, points[currIndex], points[prevIndex]);
                 
                 // Label it with the distance
-                int distance = computeDistance(points[currIndex], points[prevIndex]);
-                graphics.DrawString(String.Format("{0}", distance), SystemFonts.DefaultFont, Brushes.Black, findMidPoint(prevIndex, currIndex));
+                double distance = computeDistance(points[currIndex], points[prevIndex]);
+                totalPathCost += distance;
+                graphics.DrawString(String.Format("{0}", (int)distance), SystemFonts.DefaultFont, Brushes.Black, findMidPoint(prevIndex, currIndex));
 
                 // Update the iterator
                 prevIndex = currIndex;
             }
+            pathCostBox.Text = String.Format("{0}", totalPathCost);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,10 +442,9 @@ namespace NetworkRouting
         /**
         * This function will implement Dijkstra's Algorithm
         */
-        private List<int> Dijkstras()
+        private List<int> Dijkstras(ref PriorityQueue queue, bool isArray)
         {
             // Create Queue to track order of points
-            PriorityQueue queue = new PriorityQueueArray();
             queue.makeQueue(points.Count);
             // Set up prev node list
             List<int> prev = new List<int>();
@@ -435,20 +456,31 @@ namespace NetworkRouting
             }
 
             // Initilize the start node distance to 0
-            queue.insert(startNodeIndex, 0);
             dist[startNodeIndex] = 0;
+            
+            // Update Priority Queue to reflect change in start point distance
+            if (isArray)
+                queue.insert(startNodeIndex, 0);
+            else
+                queue.insert(ref dist, startNodeIndex);
 
             // Iterate while the queue is not empty
             while (!queue.isEmpty())
             {
                 // Grab the next min cost Point
-                int indexOfMin = queue.deleteMin();
+                int indexOfMin;
+                if (isArray)
+                    indexOfMin = queue.deleteMin();
+                else
+                    indexOfMin = queue.deleteMin(ref dist);
+
                 //Console.WriteLine("index of min is: " + indexOfMin + " and start node index is: " + startNodeIndex);
                 PointF u = points[indexOfMin];
-
+                
                 // For all edges coming out of u
                 foreach (int targetIndex in adjacencyList[indexOfMin])
                 {
+                    //Console.WriteLine("target index is: " + targetIndex);
                     PointF target = points[targetIndex];
                     //Console.WriteLine("distance of min node is: " + dist[indexOfMin]);
                     //Console.WriteLine("distance between target and source is " + computeDistance(u, target));
@@ -458,7 +490,10 @@ namespace NetworkRouting
                     {
                         prev[targetIndex] = indexOfMin;
                         dist[targetIndex] = newDist;
-                        queue.decreaseKey(targetIndex, newDist);
+                        if (isArray)
+                            queue.decreaseKey(targetIndex, newDist);
+                        else
+                            queue.decreaseKey(ref dist, targetIndex);
                     }
                 }
                 //queue.printQueueContents();
@@ -477,8 +512,31 @@ namespace NetworkRouting
         private void solveButton_Clicked()
         {
             //***Implement this method, use the variables "startNodeIndex" and "stopNodeIndex" as the indices for your start and stop points, respectively * **
-            List <int> path = Dijkstras();
-            drawPath(path);
+            PriorityQueue queue = new PriorityQueueHeap();
+            Stopwatch watch = Stopwatch.StartNew();
+            List<int> pathHeap = Dijkstras(ref queue, false);
+            watch.Stop();
+            double heapTime = (double)watch.ElapsedMilliseconds / 1000;
+            heapTimeBox.Text = String.Format("{0}", heapTime);
+            List<int> pathArray = new List<int>();
+            if (arrayCheckBox.Checked)
+            {
+                PriorityQueue queueArray = new PriorityQueueArray();
+                watch = Stopwatch.StartNew();
+                pathArray = Dijkstras(ref queueArray, true);
+                watch.Stop();
+                double arrayTime = (double)watch.ElapsedMilliseconds / 1000;
+                arrayTimeBox.Text = String.Format("{0}", arrayTime);
+                differenceBox.Text = String.Format("{0}", (arrayTime - heapTime)/heapTime);
+                // check if paths are the same
+                for (int i = 0; i < pathArray.Count(); i++)
+                {
+                    if (pathArray[i] != pathHeap[i])
+                        Console.WriteLine("At index " + i + " pathArray was :" + pathArray[i] + " and pathHeap was " + pathHeap[i]);
+                }
+            }
+            
+            drawPath(pathArray);
         }
 
         private Boolean startStopToggle = true;
