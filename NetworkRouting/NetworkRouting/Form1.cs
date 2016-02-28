@@ -255,6 +255,7 @@ namespace NetworkRouting
         {
             private int capacity;
             private int count;
+            private int lastElement;
             private int[] distances;
             private int[] pointers;
             public PriorityQueueHeap()
@@ -269,7 +270,7 @@ namespace NetworkRouting
             public override void printQueueContents()
             {
                 Console.Write("The contents of the queue are: ");
-                for (int i = 1; i < count; i++)
+                for (int i = 1; i < capacity; i++)
                 {
                     if (distances[i] != -1)
                         Console.Write(distances[i] + " ");
@@ -288,18 +289,24 @@ namespace NetworkRouting
                 }
                 capacity = numOfNodes;
                 count = 0;
+                lastElement = capacity;
             }
 
             public override int deleteMin(ref List<double> distanceArray)
             {
                 // grab the node with min value which will be at the root
                 int minValue = distances[1];
+                distances[1] = distances[capacity];
                 count--;
+                lastElement--;
+                
 
                 // fix the heap
                 int indexIterator = 1;
                 while (indexIterator < capacity)
                 {
+                    //Console.WriteLine("index iterator at: " + indexIterator);
+                    // grab left child
                     int smallerElementIndex = 2*indexIterator;
 
                     // if child does not exist, break
@@ -307,19 +314,22 @@ namespace NetworkRouting
                         break;
                     
                     // if right child exists and is of smaller value, pick it
-                    if (smallerElementIndex + 1 <= count && distanceArray[distances[smallerElementIndex]] > distanceArray[distances[smallerElementIndex + 1]])
+                    if (smallerElementIndex + 1 <= capacity && distanceArray[distances[smallerElementIndex + 1]] < distanceArray[distances[smallerElementIndex]])
                     {
                         smallerElementIndex++;
                     }
 
-                    // set the node's value to that of its smaller child and update the iterator
-                    int temp = distances[smallerElementIndex];
-                    distances[smallerElementIndex] = distances[indexIterator];
-                    distances[indexIterator] = temp;
+                    if (distanceArray[distances[indexIterator]] > distanceArray[distances[smallerElementIndex]])
+                    {
+                        // set the node's value to that of its smaller child and update the iterator
+                        int temp = distances[smallerElementIndex];
+                        distances[smallerElementIndex] = distances[indexIterator];
+                        distances[indexIterator] = temp;
 
-                    pointers[distances[indexIterator]] = smallerElementIndex;
-                    pointers[distances[smallerElementIndex]] = indexIterator;
-
+                        pointers[distances[indexIterator]] = indexIterator;
+                        pointers[distances[smallerElementIndex]] = smallerElementIndex;
+                    }
+                   
                     indexIterator = smallerElementIndex;
                 }
                 // return the min value
@@ -342,8 +352,8 @@ namespace NetworkRouting
                     distances[indexIterator] = temp;
 
                     // update the pointers array
-                    pointers[distances[indexIterator / 2]] = indexIterator;
-                    pointers[distances[indexIterator]] = indexIterator / 2;
+                    pointers[distances[indexIterator / 2]] = indexIterator / 2;
+                    pointers[distances[indexIterator]] = indexIterator;
 
                     indexIterator /= 2;
                 }
@@ -356,7 +366,7 @@ namespace NetworkRouting
                 distances[pointers[elementIndex]] = elementIndex;
                 count++;
 
-                // as long as its parent has a smaller value and have not hit the root
+                // as long as its parent has a larger value and have not hit the root
                 int indexIterator = pointers[elementIndex];
                 while (indexIterator != 1 && distanceArray[distances[indexIterator/2]] > distanceArray[distances[indexIterator]])
                 {
@@ -366,8 +376,8 @@ namespace NetworkRouting
                     distances[indexIterator] = temp;
 
                     // update the pointers array
-                    pointers[distances[indexIterator / 2]] = indexIterator;
-                    pointers[distances[indexIterator]] = indexIterator / 2;
+                    pointers[distances[indexIterator / 2]] = indexIterator/2;
+                    pointers[distances[indexIterator]] = indexIterator;
 
                     indexIterator /= 2;
                 }
@@ -405,7 +415,7 @@ namespace NetworkRouting
         /**
         * Helper function to draw the path between the list of points
         */
-        private void drawPath(List<int> path)
+        private void drawPath(List<int> path, bool isArray)
         {
             // Create variables to iterate through the path
             int currIndex = stopNodeIndex;
@@ -418,8 +428,12 @@ namespace NetworkRouting
                 if (currIndex == -1) // if hit start node, exit cause the path is done
                     break;
                 // Draw line
-                Pen black = new Pen(Color.Black, 2);
-                graphics.DrawLine(black, points[currIndex], points[prevIndex]);
+                Pen pen;
+                if (isArray)
+                    pen = new Pen(Color.Black, 2);
+                else
+                    pen = new Pen(Color.Red, 5);
+                graphics.DrawLine(pen, points[currIndex], points[prevIndex]);
                 
                 // Label it with the distance
                 double distance = computeDistance(points[currIndex], points[prevIndex]);
@@ -511,24 +525,47 @@ namespace NetworkRouting
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void solveButton_Clicked()
         {
-            //***Implement this method, use the variables "startNodeIndex" and "stopNodeIndex" as the indices for your start and stop points, respectively * **
+            // If debugging
+            //Console.Write("points array: ");
+            //for (int i = 0; i < points.Count(); i++)
+            //{
+            //    Console.Write(points[i] + " ");
+            //}
+            //Console.WriteLine();
+            //Console.Write("Adjacency list: ");
+            //for (int i = 0; i < points.Count(); i++)
+            //{
+            //    Console.Write(adjacencyList[i] + " ");
+            //}
+            //Console.WriteLine();
+
+            // As default, solve the problem using the heap
             PriorityQueue queue = new PriorityQueueHeap();
+            Console.WriteLine("////////////////doing heap/////////////////////");
             Stopwatch watch = Stopwatch.StartNew();
             List<int> pathHeap = Dijkstras(ref queue, false);
             watch.Stop();
+
+            // Calculate time for heap
             double heapTime = (double)watch.ElapsedMilliseconds / 1000;
             heapTimeBox.Text = String.Format("{0}", heapTime);
+
             List<int> pathArray = new List<int>();
+            // Now If the Array box is checked, solve it again using an array, and compare answers
             if (arrayCheckBox.Checked)
             {
                 PriorityQueue queueArray = new PriorityQueueArray();
+                Console.WriteLine("////////////// doing array /////////////////////");
                 watch = Stopwatch.StartNew();
                 pathArray = Dijkstras(ref queueArray, true);
                 watch.Stop();
+
+                // Calculate time for array
                 double arrayTime = (double)watch.ElapsedMilliseconds / 1000;
                 arrayTimeBox.Text = String.Format("{0}", arrayTime);
                 differenceBox.Text = String.Format("{0}", (arrayTime - heapTime)/heapTime);
-                // check if paths are the same
+                
+                // check if the two paths are the same
                 for (int i = 0; i < pathArray.Count(); i++)
                 {
                     if (pathArray[i] != pathHeap[i])
@@ -536,7 +573,9 @@ namespace NetworkRouting
                 }
             }
             
-            drawPath(pathArray);
+            // Draw the final minimum cost path
+            drawPath(pathHeap, false);
+            drawPath(pathArray, true);
         }
 
         private Boolean startStopToggle = true;
