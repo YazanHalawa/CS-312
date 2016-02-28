@@ -171,9 +171,13 @@ namespace NetworkRouting
 
             public abstract int deleteMin();
 
-            public abstract void decreaseKey(int targetIndex, double newKey);
+            public virtual void decreaseKey(int targetIndex, double newKey) { }
 
-            public abstract void insert(int elementIndex, double value);
+            public virtual void decreaseKey(ref List<double> distanceArray, int targetIndex, double newKey) { }
+
+            public virtual void insert(int elementIndex, double value) { }
+
+            public virtual void insert(ref List<double> distanceArray, int elementIndex, int indexToValue) { }
 
             public abstract void printQueueContents();
 
@@ -247,6 +251,8 @@ namespace NetworkRouting
         public class PriorityQueueHeap : PriorityQueue
         {
             private int count;
+            private int[] distances;
+            private int[] pointers;
             public PriorityQueueHeap()
             {
             }
@@ -258,32 +264,94 @@ namespace NetworkRouting
 
             public override void printQueueContents()
             {
-                //Console.Write("The contents of the queue are: ");
-                //for (int i = 0; i < count; i++)
-                //{
-                //    Console.Write(queue[i] + " ");
-                //}
-                //Console.WriteLine();
+                Console.Write("The contents of the queue are: ");
+                for (int i = 0; i < distances.Count(); i++)
+                {
+                    if (distances[i] != double.MaxValue)
+                        Console.Write(distances[i] + " ");
+                }
+                Console.WriteLine();
             }
 
             public override void makeQueue(int numOfNodes)
             {
-
+                distances = new int[numOfNodes+1];
+                pointers = new int[numOfNodes];
+                count = 1;
             }
 
             public override int deleteMin()
             {
+                // grab the node with min value which will be at the root
+                double minValue = distances[1];
+                count--;
 
+                // fix the heap
+                int indexIterator = 1;
+                while (indexIterator < count)
+                {
+                    int smallerElementIndex;
+                    smallerElementIndex = 2*indexIterator;
+
+                    // if child does not exist, break
+                    if (smallerElementIndex > count)
+                        break;
+                    
+                    // if right child exists and is of smaller value, pick it
+                    if (smallerElementIndex + 1 <= count && distances[smallerElementIndex] > distances[smallerElementIndex + 1])
+                    {
+                        smallerElementIndex++;
+                    }
+
+                    // set the node's value to that of its smaller child and update the iterator
+                    distances[indexIterator] = distances[smallerElementIndex];
+                    indexIterator = smallerElementIndex;
+                }
+
+                // return the min value
+                return (int)minValue;
             }
 
-            public override void decreaseKey(int targetIndex, double newKey)
+            public override void decreaseKey(ref List<double> distanceArray, int targetIndex, double newKey)
             {
+                // find the node with the old value
+                int indexToHeap = pointers[targetIndex];
+
+                // reorder the heap by bubbling up the min to top
+                int indexIterator = indexToHeap;
+                while (indexIterator != 1 && distanceArray[distances[indexIterator / 2]] < distanceArray[distances[indexIterator]])
+                {
+                    // swap the two nodes
+                    int temp = distances[indexIterator / 2];
+                    distances[indexIterator / 2] = distances[indexIterator];
+                    distances[indexIterator] = temp;
+
+                    // update the pointers array
+                    pointers[distances[indexIterator / 2]] = indexIterator;
+                    pointers[distances[indexIterator]] = indexIterator / 2;
+                }
 
             }
-
-            public override void insert(int elementIndex, double value)
+ 
+            public override void insert(ref List<double> distanceArray, int elementIndex, int indexToValue)
             {
+                // insert the element at the end of the distances array
+                distances[count] = indexToValue;
+                count++;
 
+                // as long as its parent has a smaller value and have not hit the root
+                int indexIterator = count-1;
+                while (indexIterator != 1 && distanceArray[distances[indexIterator/2]] < distanceArray[distances[indexIterator]])
+                {
+                    // swap the two nodes
+                    int temp = distances[indexIterator / 2];
+                    distances[indexIterator / 2] = distances[indexIterator];
+                    distances[indexIterator] = temp;
+                }
+
+                // Insert into the pointers array a mapping from the node to its position in the heap array
+                int indexToHeapArray = indexIterator;
+                pointers[elementIndex] = indexToHeapArray;
             }
         }
 
