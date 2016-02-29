@@ -164,6 +164,9 @@ namespace NetworkRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////// Priority Queue ////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * An Abstract class that specifies the methods that a Priorit Queue supports
+        */
         public abstract class PriorityQueue
         {
             public PriorityQueue() { }
@@ -188,6 +191,10 @@ namespace NetworkRouting
 
         }
 
+        /**
+        * This class implements the Priority Queue methods using an array implementation. The Time and Space complexities
+        * are listen above the corresponding functions
+        */
         public class PriorityQueueArray : PriorityQueue
         {
             private double[] queue;
@@ -197,11 +204,18 @@ namespace NetworkRouting
             {
             }
 
+            /**
+            * This functions returns whether the queue is empty or not. Time and Space = O(1) as it only involves an int comparison
+            */
             public override bool isEmpty()
             {
                 return count == 0;
             }
 
+            /**
+            * Helper function to print the contents of the queue. Time Complexity: O(n) where n is the count of elements in the queue.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
             public override void printQueueContents()
             {
                 Console.Write("The contents of the queue are: ");
@@ -212,6 +226,11 @@ namespace NetworkRouting
                 Console.WriteLine();
             }
 
+            /**
+            * This function creates an array to implement the queue. Time and Space Complexities are both O(|V|) where |V| is
+            * the number of nodes. This is because you create an array of the same size and specify the value for each item by 
+            * iterating over the entire array.
+            */
             public override void makeQueue(int numOfNodes)
             {
                 queue = new double[numOfNodes];
@@ -222,6 +241,11 @@ namespace NetworkRouting
                 count = numOfNodes;
             }
 
+            /**
+            * This method returns the index of the element with the minimum value and removes it from the queue. 
+            * Time Complexity: O(|V|) because we iterate over the entire array to find the min, where |V| is the number of nodes
+            * Space Complexity: O(1) because we don't create any extra variables that vary with the size of the input.
+            */
             public override int deleteMin()
             {
                 double min = int.MaxValue;
@@ -239,11 +263,21 @@ namespace NetworkRouting
                 return minIndex;
             }
 
+            /**
+            * This method updates a specific index in the array with a new key.
+            * Time Complexity: O(1) as all it does is one assignment that does not vary with the size of the input. 
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */ 
             public override void decreaseKey(int targetIndex, double newKey)
             {
                 queue[targetIndex] = newKey;
             }
 
+            /**
+            * This method inserts a new value into the queue and increments the count of nodes in the queue
+            * Time Complexity: O(1) as all it does is two assignments that do not vary with the size of the input
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
             public override void insert(int elementIndex, double value)
             {
                 queue[elementIndex] = value;
@@ -262,11 +296,18 @@ namespace NetworkRouting
             {
             }
 
+            /**
+            * This functions returns whether the queue is empty or not. Time and Space = O(1) as it only involves an int comparison
+            */
             public override bool isEmpty()
             {
                 return count == 0;
             }
 
+            /**
+            * Helper method to print the contents of the queue. Time Complexity: O(|V|) where |V| is the number of nodes.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
             public override void printQueueContents()
             {
                 Console.Write("The contents of the queue are: ");
@@ -278,6 +319,11 @@ namespace NetworkRouting
                 Console.WriteLine();
             }
 
+            /**
+            * This method creates an array to implement the queue. Time and Space Complexities are both O(|V|) where |V| is
+            * the number of nodes. This is because you create an array of the same size and specify the value for each item by 
+            * iterating over the entire array.
+            */
             public override void makeQueue(int numOfNodes)
             {
                 distances = new int[numOfNodes+1];
@@ -292,6 +338,13 @@ namespace NetworkRouting
                 lastElement = capacity;
             }
 
+            /**
+            * This method returns the index of the element with the minimum value and removes it from the queue. 
+            * Time Complexity: O(log(|V|)) because removing a node is constant time as we have its position in
+            * the queue, then to readjust the heap we just bubble up the min value which takes as long as 
+            * the depth of the tree which is log(|V|), where |V| is the number of nodes
+            * Space Complexity: O(1) because we don't create any extra variables that vary with the size of the input.
+            */
             public override int deleteMin(ref List<double> distanceArray)
             {
                 // grab the node with min value which will be at the root
@@ -339,6 +392,12 @@ namespace NetworkRouting
                 return minValue;
             }
 
+            /**
+            * This method updates a specific index in the array with a new key.
+            * Time Complexity: O(log(|V|)) as it finds the value whose position needs to be updated and bubbles
+            * up the min value to the top which takes as long as the depth of the tree which is log|V|.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
             public override void decreaseKey(ref List<double> distanceArray, int targetIndex)
             {
                 // find the node with the old value
@@ -362,7 +421,13 @@ namespace NetworkRouting
                 }
 
             }
- 
+
+            /**
+            * This method updates the nodes in the queue after inserting a new node
+            * Time Complexity: O(log(|V|)) as reording the heap works by bubbling up the min value to the top
+            * which takes as long as the depth of the tree which is log|V|.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
             public override void insert(ref List<double> distanceArray, int elementIndex)
             {
                 // update the count
@@ -395,6 +460,8 @@ namespace NetworkRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /**
         * Helper function to compute distance between two points
+        * Time Complexity: O(1) as all it does is some arithmetic which does not vary with the size of the input
+        * Space Complexity: O(1) as it does not create an extra variables that vary with the size of the input
         */
         private double computeDistance(PointF point1, PointF point2)
         {
@@ -405,6 +472,8 @@ namespace NetworkRouting
 
         /**
         * Helper function to calculate the midpoint between two points
+        * Time Complexity: O(1) as all it does is some arithmetic which does not vary with the size of the input
+        * Space Complexity: O(1) as it does not create an extra variables that vary with the size of the input
         */
         private PointF findMidPoint(int firstIndex, int secondIndex)
         {
@@ -416,8 +485,10 @@ namespace NetworkRouting
 
         /**
         * Helper function to draw the path between the list of points
+        * Time Complexity: O(n) as the worse case is it iterates over the entire the path. n is the size of the path list.
+        * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
         */
-        private void drawPath(List<int> path, bool isArray)
+        private void drawPath(ref List<int> path, bool isArray)
         {
             // Create variables to iterate through the path
             int currIndex = stopNodeIndex;
@@ -456,7 +527,11 @@ namespace NetworkRouting
         //////////////////////////////////////////////  Dijktra's Algorithm ////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /**
-        * This function will implement Dijkstra's Algorithm
+        * This function will implement Dijkstra's Algorithm to find the shortest path to all the nodes from the source node
+        * Time Complexity: O((|V| + |E|) log|V|) with a heap as it iterates over all the nodes and all the edges and uses a queue to go
+        * through them where the heap queue has a worst case of log|V|. Whereas if the queue was implemented with an array, the complexity
+        * would be O((|V|^2) since the queue has a worst case of |V| and |E| is upper bounded by |V|^2 and so |V|^2 dominates.
+        * Space Complexity: O(|V|) as it creates arrays as big as the number of nodes in the graph
         */
         private List<int> Dijkstras(ref PriorityQueue queue, bool isArray)
         {
@@ -548,8 +623,8 @@ namespace NetworkRouting
             }
             
             // Draw the final minimum cost path
-            drawPath(pathHeap, false);
-            drawPath(pathArray, true);
+            drawPath(ref pathHeap, false);
+            drawPath(ref pathArray, true);
         }
 
         private Boolean startStopToggle = true;
