@@ -296,25 +296,29 @@ namespace NetworkRouting
             {
                 // grab the node with min value which will be at the root
                 int minValue = distances[1];
-                distances[1] = distances[capacity];
                 count--;
+                //Console.WriteLine("last element is " + lastElement);
+                if (lastElement == -1)
+                    return minValue;
+                distances[1] = distances[lastElement];
+                pointers[distances[1]] = 1;
                 lastElement--;
-                
+
 
                 // fix the heap
                 int indexIterator = 1;
-                while (indexIterator < capacity)
+                while (indexIterator <= lastElement)
                 {
                     //Console.WriteLine("index iterator at: " + indexIterator);
                     // grab left child
                     int smallerElementIndex = 2*indexIterator;
 
                     // if child does not exist, break
-                    if (smallerElementIndex > capacity)
+                    if (smallerElementIndex > lastElement)
                         break;
                     
                     // if right child exists and is of smaller value, pick it
-                    if (smallerElementIndex + 1 <= capacity && distanceArray[distances[smallerElementIndex + 1]] < distanceArray[distances[smallerElementIndex]])
+                    if (smallerElementIndex + 1 <= lastElement && distanceArray[distances[smallerElementIndex + 1]] < distanceArray[distances[smallerElementIndex]])
                     {
                         smallerElementIndex++;
                     }
@@ -344,7 +348,7 @@ namespace NetworkRouting
 
                 // reorder the heap by bubbling up the min to top
                 int indexIterator = indexToHeap;
-                while (indexIterator != 1 && distanceArray[distances[indexIterator / 2]] > distanceArray[distances[indexIterator]])
+                while (indexIterator > 1 && distanceArray[distances[indexIterator / 2]] > distanceArray[distances[indexIterator]])
                 {
                     // swap the two nodes
                     int temp = distances[indexIterator / 2];
@@ -362,13 +366,12 @@ namespace NetworkRouting
  
             public override void insert(ref List<double> distanceArray, int elementIndex)
             {
-                // insert the element at the end of the distances array
-                distances[pointers[elementIndex]] = elementIndex;
+                // update the count
                 count++;
 
                 // as long as its parent has a larger value and have not hit the root
                 int indexIterator = pointers[elementIndex];
-                while (indexIterator != 1 && distanceArray[distances[indexIterator/2]] > distanceArray[distances[indexIterator]])
+                while (indexIterator > 1 && distanceArray[distances[indexIterator/2]] > distanceArray[distances[indexIterator]])
                 {
                     // swap the two nodes
                     int temp = distances[indexIterator / 2];
@@ -376,7 +379,7 @@ namespace NetworkRouting
                     distances[indexIterator] = temp;
 
                     // update the pointers array
-                    pointers[distances[indexIterator / 2]] = indexIterator/2;
+                    pointers[distances[indexIterator / 2]] = indexIterator / 2;
                     pointers[distances[indexIterator]] = indexIterator;
 
                     indexIterator /= 2;
