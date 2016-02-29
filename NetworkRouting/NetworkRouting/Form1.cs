@@ -309,7 +309,6 @@ namespace NetworkRouting
                 int indexIterator = 1;
                 while (indexIterator <= lastElement)
                 {
-                    //Console.WriteLine("index iterator at: " + indexIterator);
                     // grab left child
                     int smallerElementIndex = 2*indexIterator;
 
@@ -491,18 +490,13 @@ namespace NetworkRouting
                 else
                     indexOfMin = queue.deleteMin(ref dist);
 
-                //Console.WriteLine("index of min is: " + indexOfMin + " and start node index is: " + startNodeIndex);
                 PointF u = points[indexOfMin];
                 
                 // For all edges coming out of u
                 foreach (int targetIndex in adjacencyList[indexOfMin])
                 {
-                    //Console.WriteLine("target index is: " + targetIndex);
                     PointF target = points[targetIndex];
-                    //Console.WriteLine("distance of min node is: " + dist[indexOfMin]);
-                    //Console.WriteLine("distance between target and source is " + computeDistance(u, target));
                     double newDist = dist[indexOfMin] + computeDistance(u, target);
-                    //Console.WriteLine("old distance is: " + dist[targetIndex] + " and new one is: " + newDist);
                     if (dist[targetIndex] > newDist)
                     {
                         prev[targetIndex] = indexOfMin;
@@ -513,14 +507,7 @@ namespace NetworkRouting
                             queue.decreaseKey(ref dist, targetIndex);
                     }
                 }
-                //queue.printQueueContents();
             }
-            //Console.Write("Prev contents: ");
-            //foreach (int index in prev)
-            //{
-            //    Console.Write(index + " ");
-            //}
-            //Console.WriteLine();
             return prev;
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -528,23 +515,8 @@ namespace NetworkRouting
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void solveButton_Clicked()
         {
-            // If debugging
-            //Console.Write("points array: ");
-            //for (int i = 0; i < points.Count(); i++)
-            //{
-            //    Console.Write(points[i] + " ");
-            //}
-            //Console.WriteLine();
-            //Console.Write("Adjacency list: ");
-            //for (int i = 0; i < points.Count(); i++)
-            //{
-            //    Console.Write(adjacencyList[i] + " ");
-            //}
-            //Console.WriteLine();
-
             // As default, solve the problem using the heap
             PriorityQueue queue = new PriorityQueueHeap();
-            Console.WriteLine("////////////////doing heap/////////////////////");
             Stopwatch watch = Stopwatch.StartNew();
             List<int> pathHeap = Dijkstras(ref queue, false);
             watch.Stop();
@@ -558,7 +530,6 @@ namespace NetworkRouting
             if (arrayCheckBox.Checked)
             {
                 PriorityQueue queueArray = new PriorityQueueArray();
-                Console.WriteLine("////////////// doing array /////////////////////");
                 watch = Stopwatch.StartNew();
                 pathArray = Dijkstras(ref queueArray, true);
                 watch.Stop();
