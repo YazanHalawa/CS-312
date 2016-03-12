@@ -43,31 +43,31 @@ namespace GeneticsLab
             // ***************************************************************************************
 
             // Create two arrays to hold the intermediate values and the alignment details
-            int[,] values = new int[sequenceA.Name.Length+1, sequenceB.Name.Length+1];
-            directions[,] prev = new directions[sequenceA.Name.Length+1, sequenceB.Name.Length+1];
+            int[,] values = new int[sequenceA.Sequence.Length+1, sequenceB.Sequence.Length+1];
+            directions[,] prev = new directions[sequenceA.Sequence.Length+1, sequenceB.Sequence.Length+1];
             
             // first fill first row and column with cost of inserts/deletes
-            for (int column = 0; column < sequenceB.Name.Length+1; column++)
+            for (int column = 0; column < sequenceB.Sequence.Length+1; column++)
             {
                 values[0, column] = column * 5;
                 prev[0, column] = directions.LEFT;
             }
-            for (int row = 0; row < sequenceA.Name.Length+1; row++)
+            for (int row = 0; row < sequenceA.Sequence.Length+1; row++)
             {
                 values[row, 0] = row * 5;
                 prev[row, 0] = directions.TOP;
             }
 
             // Now iterate through the rest of the cells filling out the min value for each
-            for (int row = 1; row < sequenceA.Name.Length+1; row++)
+            for (int row = 1; row < sequenceA.Sequence.Length+1; row++)
             {
-                for (int column = 1; column < sequenceB.Name.Length+1; column++)
+                for (int column = 1; column < sequenceB.Sequence.Length+1; column++)
                 {
                     // Compute values for each direction
-                    int costOfTop_Delete = values[row, column - 1] + 5;
-                    int costOfLeft_Insert = values[row - 1, column] + 5;
+                    int costOfTop_Delete = values[row-1, column] + 5;
+                    int costOfLeft_Insert = values[row, column-1] + 5;
                     // Compute cost of moving from diagonal depending on whether the letters match
-                    int costOfMovingFromDiagonal = (sequenceA.Name[row] == sequenceB.Name[column])? -3 : 1;
+                    int costOfMovingFromDiagonal = (sequenceA.Sequence[row-1] == sequenceB.Sequence[column-1])? -3 : 1;
                     int costOfDiagonal = values[row - 1, column - 1] + costOfMovingFromDiagonal;
 
                     // value of cell would be the minimum cost out of the three directions
@@ -91,9 +91,35 @@ namespace GeneticsLab
             }
 
             // score would be value of the last cell
-            score = values[sequenceA.Name.Length, sequenceB.Name.Length];
-            
+            score = values[sequenceA.Sequence.Length, sequenceB.Sequence.Length];
+
             // Create the alignments
+            int rowIterator = sequenceA.Sequence.Length, columnIterator = sequenceB.Sequence.Length;
+            StringBuilder first = new StringBuilder(), second = new StringBuilder();
+            while (rowIterator != 0 && columnIterator != 0)
+            {
+                //Console.WriteLine("row is " + rowIterator);
+                //Console.WriteLine("column is " + columnIterator);
+                if (prev[rowIterator, columnIterator] == directions.DIAGONAL) // match/sub
+                {
+                    first.Insert(0, sequenceA.Sequence[rowIterator-1]);
+                    second.Insert(0, sequenceB.Sequence[columnIterator-1]);
+                } 
+                else if (prev[rowIterator, columnIterator] == directions.TOP) //delete
+                {
+                    first.Insert(0, sequenceA.Sequence[rowIterator-1]);
+                    second.Insert(0, '-');
+                }
+                else // insert
+                {
+                    first.Insert(0, '-');
+                    second.Insert(0, sequenceB.Sequence[columnIterator-1]);
+                }
+                rowIterator--;
+                columnIterator--;
+            }
+            alignment[0] = first.ToString();
+            alignment[1] = second.ToString();
 
             result.Update(score,alignment[0],alignment[1]);                  // bundling your results into the right object type 
             return(result);
