@@ -110,7 +110,18 @@ namespace GeneticsLab
             {
                 for (int y = x; y < NUMBER_OF_SEQUENCES; ++y)
                 {
-                    result = processor.Align_And_Extract(m_sequences[x], m_sequences[y], bandCheckBox.Checked);                 // ********* hook to the student's code
+                    // if the two sequences are the same, fill that cell with -3*length because they match
+                    if (x == y)
+                    {
+                        result = new ResultTable.Result();
+                        int score = -3 * m_sequences[x].Name.Length;
+                        string alignment = m_sequences[x].Name;
+                        result.Update(score, alignment, alignment);
+                    }
+                    else
+                    {
+                        result = processor.Align_And_Extract(m_sequences[x], m_sequences[y], bandCheckBox.Checked);                 // ********* hook to the student's code
+                    }
                     m_resultTable.AddResult(x,y,result);
                     m_resultTable.DisplayResult(x, y);
                 }
