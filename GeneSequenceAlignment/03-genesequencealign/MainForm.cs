@@ -114,8 +114,10 @@ namespace GeneticsLab
                     if (x == y)
                     {
                         result = new ResultTable.Result();
-                        int score = -3 * m_sequences[x].Name.Length;
-                        string alignment = m_sequences[x].Name;
+                        PairWiseAlign align = new PairWiseAlign();
+                        int lengthOfSequenceA = Math.Min(m_sequences[x].Sequence.Length, align.getMaxhCharactersToAlign());
+                        int score = -3 * lengthOfSequenceA;
+                        string alignment = m_sequences[x].Sequence.Substring(0, lengthOfSequenceA);
                         result.Update(score, alignment, alignment);
                     }
                     else

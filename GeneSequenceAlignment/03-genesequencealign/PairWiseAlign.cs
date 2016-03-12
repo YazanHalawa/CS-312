@@ -15,6 +15,10 @@ namespace GeneticsLab
             this.MaxCharactersToAlign = 5000;
         }
 
+        public int getMaxhCharactersToAlign()
+        {
+            return this.MaxCharactersToAlign;
+        }
         public PairWiseAlign(int len)
         {
             // Alternatively, we can use an different length; typically used with the banded option checked.
@@ -42,26 +46,30 @@ namespace GeneticsLab
             alignment[1] = "";
             // ***************************************************************************************
 
+            // Limiting the lengths of the sequences to the max characters to align
+            int lengthOfSequenceA = Math.Min(sequenceA.Sequence.Length, MaxCharactersToAlign);
+            int lengthOfSequenceB = Math.Min(sequenceB.Sequence.Length, MaxCharactersToAlign);
+
             // Create two arrays to hold the intermediate values and the alignment details
-            int[,] values = new int[sequenceA.Sequence.Length+1, sequenceB.Sequence.Length+1];
-            directions[,] prev = new directions[sequenceA.Sequence.Length+1, sequenceB.Sequence.Length+1];
+            int[,] values = new int[lengthOfSequenceA + 1, lengthOfSequenceB + 1];
+            directions[,] prev = new directions[lengthOfSequenceA + 1, lengthOfSequenceB + 1];
             
             // first fill first row and column with cost of inserts/deletes
-            for (int column = 0; column < sequenceB.Sequence.Length+1; column++)
+            for (int column = 0; column < lengthOfSequenceB + 1; column++)
             {
                 values[0, column] = column * 5;
                 prev[0, column] = directions.LEFT;
             }
-            for (int row = 0; row < sequenceA.Sequence.Length+1; row++)
+            for (int row = 0; row < lengthOfSequenceA + 1; row++)
             {
                 values[row, 0] = row * 5;
                 prev[row, 0] = directions.TOP;
             }
 
             // Now iterate through the rest of the cells filling out the min value for each
-            for (int row = 1; row < sequenceA.Sequence.Length+1; row++)
+            for (int row = 1; row < lengthOfSequenceA + 1; row++)
             {
-                for (int column = 1; column < sequenceB.Sequence.Length+1; column++)
+                for (int column = 1; column < lengthOfSequenceB + 1; column++)
                 {
                     // Compute values for each direction
                     int costOfTop_Delete = values[row-1, column] + 5;
@@ -91,10 +99,10 @@ namespace GeneticsLab
             }
 
             // score would be value of the last cell
-            score = values[sequenceA.Sequence.Length, sequenceB.Sequence.Length];
+            score = values[lengthOfSequenceA, lengthOfSequenceB];
 
             // Create the alignments
-            int rowIterator = sequenceA.Sequence.Length, columnIterator = sequenceB.Sequence.Length;
+            int rowIterator = lengthOfSequenceA, columnIterator = lengthOfSequenceB;
             StringBuilder first = new StringBuilder(), second = new StringBuilder();
             while (rowIterator != 0 && columnIterator != 0)
             {
