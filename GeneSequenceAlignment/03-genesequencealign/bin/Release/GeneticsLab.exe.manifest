@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="GeneticsLab.exe" size="18944">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="GeneticsLab.exe" size="19456">
       <assemblyIdentity name="GeneticsLab" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>hrTyu0J2MOg9zjjFHCY8Y9uzjSY=</dsig:DigestValue>
+        <dsig:DigestValue>AOU8S/hTe5biUi67ZQ610k+4Meo=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

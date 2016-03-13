@@ -8,6 +8,8 @@ namespace GeneticsLab
     class PairWiseAlign
     {
         int MaxCharactersToAlign;
+        static int distance = 3;
+        static int bandwidth = 2 * distance + 1;
 
         public PairWiseAlign()
         {
@@ -30,23 +32,27 @@ namespace GeneticsLab
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// Helper Functions //////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void fillStartCells(ref int[,] values, ref directions[,] prev, int lengthA, int lengthB)
+        void fillStartCells(ref int[,] values, ref directions[,] prev, int lengthA, int lengthB, bool banded)
         {
             for (int column = 0; column < lengthB + 1; column++)
             {
+                if (banded && column > distance)
+                    break;
                 values[0, column] = column * 5;
                 prev[0, column] = directions.LEFT;
             }
             for (int row = 0; row < lengthA + 1; row++)
             {
+                if (banded && row > distance)
+                    break;
                 values[row, 0] = row * 5;
                 prev[row, 0] = directions.TOP;
             }
 
         }
 
-        void createAlignments(ref string[] alignment, directions[,] prev, GeneSequence sequenceA, GeneSequence sequenceB,
-                                                                int lengthOfSequenceA, int lengthOfSequenceB)
+        void createAlignments(ref string[] alignment, ref directions[,] prev, ref GeneSequence sequenceA, ref GeneSequence sequenceB,
+                                                                ref int lengthOfSequenceA, ref int lengthOfSequenceB)
         {
             int rowIterator = lengthOfSequenceA, columnIterator = lengthOfSequenceB;
             StringBuilder first = new StringBuilder(), second = new StringBuilder();
@@ -95,13 +101,14 @@ namespace GeneticsLab
             directions[,] prev = new directions[lengthOfSequenceA + 1, lengthOfSequenceB + 1];
 
             // first fill first row and column with cost of inserts/deletes
-            fillStartCells(ref values, ref prev, lengthOfSequenceA, lengthOfSequenceB);
+            fillStartCells(ref values, ref prev, lengthOfSequenceA, lengthOfSequenceB, false);
 
             // Now iterate through the rest of the cells filling out the min value for each
             for (int row = 1; row < lengthOfSequenceA + 1; row++)
             {
                 for (int column = 1; column < lengthOfSequenceB + 1; column++)
                 {
+                    
                     // Compute values for each direction
                     int costOfTop_Delete = values[row - 1, column] + 5;
                     int costOfLeft_Insert = values[row, column - 1] + 5;
@@ -133,7 +140,7 @@ namespace GeneticsLab
             score = values[lengthOfSequenceA, lengthOfSequenceB];
 
             // Create the alignments
-            createAlignments(ref alignment, prev, sequenceA, sequenceB, lengthOfSequenceA, lengthOfSequenceB);
+            createAlignments(ref alignment, ref prev, ref sequenceA, ref sequenceB, ref lengthOfSequenceA, ref lengthOfSequenceB);
             
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +152,60 @@ namespace GeneticsLab
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         void bandedAlgorithm(ref int score, ref string[] alignment, ref GeneSequence sequenceA, ref GeneSequence sequenceB)
         {
+
+            // Limiting the lengths of the sequences to the max characters to align
+            int lengthOfSequenceA = Math.Min(sequenceA.Sequence.Length, MaxCharactersToAlign);
+            int lengthOfSequenceB = Math.Min(sequenceB.Sequence.Length, MaxCharactersToAlign);
+
+            // Create two arrays to hold the intermediate values and the alignment details
+            int[,] values = new int[lengthOfSequenceA + 1, lengthOfSequenceB + 1];
+            directions[,] prev = new directions[lengthOfSequenceA + 1, lengthOfSequenceB + 1];
+
+            // first fill first row and column with cost of inserts/deletes
+            fillStartCells(ref values, ref prev, lengthOfSequenceA, lengthOfSequenceB, true);
+
+            int columnStart = 1;
+            // Now iterate through the rest of the cells filling out the min value for each
+            for (int row = 1; row < lengthOfSequenceA + 1; row++)
+            {
+                for (int column = columnStart; column < lengthOfSequenceB + 1; column++)
+                {
+                    if (distance + row > column)
+                        break;
+                    // Compute values for each direction
+                    int costOfTop_Delete = values[row - 1, column] + 5;
+                    int costOfLeft_Insert = values[row, column - 1] + 5;
+                    // Compute cost of moving from diagonal depending on whether the letters match
+                    int costOfMovingFromDiagonal = (sequenceA.Sequence[row - 1] == sequenceB.Sequence[column - 1]) ? -3 : 1;
+                    int costOfDiagonal = values[row - 1, column - 1] + costOfMovingFromDiagonal;
+
+                    // value of cell would be the minimum cost out of the three directions
+                    int costOfMin = Math.Min(costOfTop_Delete, Math.Min(costOfLeft_Insert, costOfDiagonal));
+                    values[row, column] = costOfMin;
+
+                    // Store the direction
+                    if (costOfMin == costOfDiagonal)
+                    {
+                        prev[row, column] = directions.DIAGONAL;
+                    }
+                    else if (costOfMin == costOfLeft_Insert)
+                    {
+                        prev[row, column] = directions.LEFT;
+                    }
+                    else
+                    {
+                        prev[row, column] = directions.TOP;
+                    }
+                }
+                if (row > distance)
+                    columnStart++;
+            }
+
+            // score would be value of the last cell
+            score = values[lengthOfSequenceA, lengthOfSequenceB];
+
+            // Create the alignments
+            createAlignments(ref alignment, ref prev, ref sequenceA, ref sequenceB, ref lengthOfSequenceA, ref lengthOfSequenceB);
 
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
