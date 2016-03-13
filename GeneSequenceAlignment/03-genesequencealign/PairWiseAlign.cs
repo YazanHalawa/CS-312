@@ -8,13 +8,12 @@ namespace GeneticsLab
     class PairWiseAlign
     {
         int MaxCharactersToAlign;
-        static int distance = 3;
-        static int bandwidth = 2 * distance + 1;
-
+        int distance;
         public PairWiseAlign()
         {
             // Default is to align only 5000 characters in each sequence.
             this.MaxCharactersToAlign = 5000;
+            this.distance = 3;
         }
 
         public int getMaxhCharactersToAlign()
@@ -25,6 +24,8 @@ namespace GeneticsLab
         {
             // Alternatively, we can use an different length; typically used with the banded option checked.
             this.MaxCharactersToAlign = len;
+            this.distance = 3;
+
         }
 
 
@@ -36,15 +37,19 @@ namespace GeneticsLab
         {
             for (int column = 0; column < lengthB + 1; column++)
             {
-                if (banded && column > distance)
+                if (banded == true && (column > distance))
+                {
                     break;
+                }
                 values[0, column] = column * 5;
                 prev[0, column] = directions.LEFT;
             }
             for (int row = 0; row < lengthA + 1; row++)
             {
-                if (banded && row > distance)
+                if (banded == true && (row > distance))
+                {
                     break;
+                }
                 values[row, 0] = row * 5;
                 prev[row, 0] = directions.TOP;
             }
@@ -58,8 +63,7 @@ namespace GeneticsLab
             StringBuilder first = new StringBuilder(), second = new StringBuilder();
             while (rowIterator != 0 && columnIterator != 0)
             {
-                //Console.WriteLine("row is " + rowIterator);
-                //Console.WriteLine("column is " + columnIterator);
+
                 if (prev[rowIterator, columnIterator] == directions.DIAGONAL) // match/sub
                 {
                     first.Insert(0, sequenceA.Sequence[rowIterator - 1]);
@@ -108,7 +112,6 @@ namespace GeneticsLab
             {
                 for (int column = 1; column < lengthOfSequenceB + 1; column++)
                 {
-                    
                     // Compute values for each direction
                     int costOfTop_Delete = values[row - 1, column] + 5;
                     int costOfLeft_Insert = values[row, column - 1] + 5;
@@ -164,23 +167,48 @@ namespace GeneticsLab
             // first fill first row and column with cost of inserts/deletes
             fillStartCells(ref values, ref prev, lengthOfSequenceA, lengthOfSequenceB, true);
 
-            int columnStart = 1;
-            // Now iterate through the rest of the cells filling out the min value for each
-            for (int row = 1; row < lengthOfSequenceA + 1; row++)
+            if (sequenceA.Sequence == "polynomial" && sequenceB.Sequence == "exponential")
             {
-                for (int column = columnStart; column < lengthOfSequenceB + 1; column++)
+                for (int i = 0; i < lengthOfSequenceA + 1; i++)
                 {
-                    if (distance + row > column)
+                    for (int j = 0; j < lengthOfSequenceB + 1; j++)
+                    {
+                        if (values[i, j] != 0)
+                            Console.WriteLine("at " + i + " " + j + " is " + values[i, j]);
+                    }
+                }
+            }
+
+            int columnStart = 1;
+            bool alignmentFound = false;
+            int row = 1;
+            int column = columnStart;
+            // Now iterate through the rest of the cells filling out the min value for each
+            for (row = 1; row < lengthOfSequenceA + 1; row++)
+            {
+                for (column = columnStart; column < lengthOfSequenceB + 1; column++)
+                {
+                    if ((distance + row) < column)
+                    {
                         break;
+                    }
                     // Compute values for each direction
                     int costOfTop_Delete = values[row - 1, column] + 5;
+                    if ((distance + row) == column)
+                    {
+                        costOfTop_Delete = int.MaxValue;
+                    }
                     int costOfLeft_Insert = values[row, column - 1] + 5;
+                    if ((distance + column) == row)
+                    {
+                        costOfLeft_Insert = int.MaxValue;
+                    }
                     // Compute cost of moving from diagonal depending on whether the letters match
                     int costOfMovingFromDiagonal = (sequenceA.Sequence[row - 1] == sequenceB.Sequence[column - 1]) ? -3 : 1;
                     int costOfDiagonal = values[row - 1, column - 1] + costOfMovingFromDiagonal;
 
                     // value of cell would be the minimum cost out of the three directions
-                    int costOfMin = Math.Min(costOfTop_Delete, Math.Min(costOfLeft_Insert, costOfDiagonal));
+                    int costOfMin = Math.Min(costOfDiagonal, Math.Min(costOfLeft_Insert, costOfTop_Delete));
                     values[row, column] = costOfMin;
 
                     // Store the direction
@@ -196,17 +224,38 @@ namespace GeneticsLab
                     {
                         prev[row, column] = directions.TOP;
                     }
+                    if (column == lengthOfSequenceB && row == lengthOfSequenceA)
+                        alignmentFound = true;
                 }
                 if (row > distance)
                     columnStart++;
             }
-
+            //if (sequenceA.Sequence == "polynomial" && sequenceB.Sequence == "exponential")
+            //{
+            //    for (int i = 0; i < lengthOfSequenceA + 1; i++)
+            //    {
+            //        for (int j = 0; j < lengthOfSequenceB + 1; j++)
+            //        {
+            //            if (values[i, j] != 0)
+            //                Console.WriteLine("at " + i + " " + j + " is " + values[i, j]);
+            //        }
+            //    }
+            //}
+           
             // score would be value of the last cell
-            score = values[lengthOfSequenceA, lengthOfSequenceB];
+            if (alignmentFound)
+            {
+                score = values[lengthOfSequenceA, lengthOfSequenceB];
+                // Create the alignments
+                createAlignments(ref alignment, ref prev, ref sequenceA, ref sequenceB, 
+                                                ref lengthOfSequenceA, ref lengthOfSequenceB);
 
-            // Create the alignments
-            createAlignments(ref alignment, ref prev, ref sequenceA, ref sequenceB, ref lengthOfSequenceA, ref lengthOfSequenceB);
-
+            }
+            else {
+                score = int.MaxValue;
+                alignment[0] = "No Alignment Possible";
+                alignment[1] = "No Alignment Possible";
+            }
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
