@@ -74,7 +74,7 @@ namespace GeneticsLab
         {
             int rowIterator = lengthOfSequenceA, columnIterator = lengthOfSequenceB;
             StringBuilder first = new StringBuilder(), second = new StringBuilder();
-            while (rowIterator != 0 && columnIterator != 0)
+            while (rowIterator != 0 || columnIterator != 0)
             {
 
                 if (prev[rowIterator, columnIterator] == directions.DIAGONAL) // match/sub
@@ -86,19 +86,21 @@ namespace GeneticsLab
                 }
                 else if (prev[rowIterator, columnIterator] == directions.LEFT) //insert
                 {
-                    first.Insert(0, sequenceA.Sequence[rowIterator - 1]);
-                    second.Insert(0, '-');
+                    first.Insert(0, '-');
+                    second.Insert(0, sequenceB.Sequence[columnIterator - 1]);
                     columnIterator--;
                 }
                 else // delete
                 {
-                    first.Insert(0, '-');
-                    second.Insert(0, sequenceB.Sequence[columnIterator - 1]);
+                    first.Insert(0, sequenceA.Sequence[rowIterator - 1]);
+                    second.Insert(0, '-');
                     rowIterator--;
                 }
             }
-            alignment[0] = first.ToString();
-            alignment[1] = second.ToString();
+
+            // Limiting the length of the string to 100 if it exceeds it
+            alignment[0] = first.ToString().Substring(0, Math.Min(first.Length, 100));
+            alignment[1] = second.ToString().Substring(0, Math.Min(second.Length, 100));
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
