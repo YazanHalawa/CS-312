@@ -33,6 +33,13 @@ namespace GeneticsLab
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ///////////////////////////////////////// Helper Functions //////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * This function fills the first row and column with the cost of insert/delete for each one
+        * Time Complexity: O(n+m) where n is the length of the first sequence and m is the length of the second sequence.
+        *                   This is because it iterates over all letters in each sequence once
+        * Space Complexity: O(1) because it passes the values by reference meaning it does not create a copy and 
+        *                   it does not create any variables that depend on the size of the input.
+        */
         void fillStartCells(ref int[,] values, ref directions[,] prev, int lengthA, int lengthB, bool banded)
         {
             for (int column = 0; column < lengthB + 1; column++)
@@ -56,6 +63,12 @@ namespace GeneticsLab
 
         }
 
+        /**
+        * This function creates the alignments for both sequences using the previous pointers array
+        * Time Complexity: O(n) where n is the length of the larger sequence because it the best alignment
+        *                  is as long as the length of the longest sequence
+        * Space Complexity: O(n) where n is the length of the larger sequence as it creates a string as long as it
+        */
         void createAlignments(ref string[] alignment, ref directions[,] prev, ref GeneSequence sequenceA, ref GeneSequence sequenceB,
                                                                 ref int lengthOfSequenceA, ref int lengthOfSequenceB)
         {
@@ -92,9 +105,17 @@ namespace GeneticsLab
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// Unbanded Algorithm ////////////////////////////////////////////////////
+        ///////////////////////////////////////// Unrestricted Algorithm ////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void unbandedAlgorithm (ref int score, ref string[] alignment, ref GeneSequence sequenceA, ref GeneSequence sequenceB)
+        /**
+        * This function performs the unrestricted algorithm on the two sequences using dynamic programming to come up with
+        * the best alignment for both.
+        * Time Complexity: O(nm) where n is the length of the first sequence and m is the length of the second sequence. This
+        *                   is because the algorithm iterates over all cells in the array of n x m
+        * Space Complexity: O(nm) where n is the length of the first sequence and m is the length of the second sequence. This
+        *                   is because the algorithm creates an array of n x m 
+        */
+        void unrestrictedAlgorithm (ref int score, ref string[] alignment, ref GeneSequence sequenceA, ref GeneSequence sequenceB)
         {
             // Limiting the lengths of the sequences to the max characters to align
             int lengthOfSequenceA = Math.Min(sequenceA.Sequence.Length, MaxCharactersToAlign);
@@ -151,8 +172,20 @@ namespace GeneticsLab
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////// Banded Algorithm ////////////////////////////////////////////////////
+        ///////////////////////////////////////// Banded Algorithm //////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * This function performs the banded algorithm on the two sequences using dynamic programming to come up with
+        * the best alignment for both. The band is set to whatever the distance is. Currently it is d = 3 which makes the
+        * bandwidth equals 2d+1 = 7.
+        * Time Complexity: O(n+m) where n is the length of the first sequence and m is the length of the second sequence. This
+        *                   is because the algorithm iterates over a specific number of cells for each row and column. As we don't
+        *                   care about constants, the time would depend on the length of sequence A and B. Meaning each time
+        *                   the array size is increased by a row or a column, we have to compute those bandwidth number of cells
+        *                   again, so it is O(n+m).
+        * Space Complexity: O(nm) where n is the length of the first sequence and m is the length of the second sequence. This
+        *                   is because the algorithm creates an array of n x m 
+        */
         void bandedAlgorithm(ref int score, ref string[] alignment, ref GeneSequence sequenceA, ref GeneSequence sequenceB)
         {
 
@@ -166,18 +199,6 @@ namespace GeneticsLab
 
             // first fill first row and column with cost of inserts/deletes
             fillStartCells(ref values, ref prev, lengthOfSequenceA, lengthOfSequenceB, true);
-
-            if (sequenceA.Sequence == "polynomial" && sequenceB.Sequence == "exponential")
-            {
-                for (int i = 0; i < lengthOfSequenceA + 1; i++)
-                {
-                    for (int j = 0; j < lengthOfSequenceB + 1; j++)
-                    {
-                        if (values[i, j] != 0)
-                            Console.WriteLine("at " + i + " " + j + " is " + values[i, j]);
-                    }
-                }
-            }
 
             int columnStart = 1;
             bool alignmentFound = false;
@@ -230,17 +251,6 @@ namespace GeneticsLab
                 if (row > distance)
                     columnStart++;
             }
-            //if (sequenceA.Sequence == "polynomial" && sequenceB.Sequence == "exponential")
-            //{
-            //    for (int i = 0; i < lengthOfSequenceA + 1; i++)
-            //    {
-            //        for (int j = 0; j < lengthOfSequenceB + 1; j++)
-            //        {
-            //            if (values[i, j] != 0)
-            //                Console.WriteLine("at " + i + " " + j + " is " + values[i, j]);
-            //        }
-            //    }
-            //}
            
             // score would be value of the last cell
             if (alignmentFound)
@@ -281,7 +291,7 @@ namespace GeneticsLab
             alignment[1] = "";
             // ***************************************************************************************
             if (!banded)
-                unbandedAlgorithm(ref score, ref alignment, ref sequenceA, ref sequenceB);
+                unrestrictedAlgorithm(ref score, ref alignment, ref sequenceA, ref sequenceB);
             else
                 bandedAlgorithm(ref score, ref alignment, ref sequenceA, ref sequenceB);
 
