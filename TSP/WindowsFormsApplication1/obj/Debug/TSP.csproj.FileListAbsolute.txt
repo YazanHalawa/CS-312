@@ -10,3 +10,9 @@ C:\Users\Dan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplicat
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.exe.config
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.exe
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.pdb
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.exe
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.pdb
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.csprojResolveAssemblyReference.cache
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.mainform.resources
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.Properties.Resources.resources
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.csproj.GenerateResource.Cache
