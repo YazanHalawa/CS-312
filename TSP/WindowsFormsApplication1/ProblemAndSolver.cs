@@ -369,7 +369,7 @@ namespace TSP
 
             return results;
         }
-
+        #region StateClass
         /////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////// State Class //////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -380,17 +380,17 @@ namespace TSP
         class State
         {
             private ArrayList path;
-            private int lowerBound;
-            private int[,] costMatrix;
+            private double lowerBound;
+            private double[,] costMatrix;
 
             /**
             * Constructor
             */
-            public State(int numOfCities)
+            public State(ArrayList newPath, double newLowerBound, double[,] newCostMatrix)
             {
-                path = new ArrayList();
-                lowerBound = 0;
-                costMatrix = new int[numOfCities, numOfCities];
+                path = newPath;
+                lowerBound = newLowerBound;
+                costMatrix = newCostMatrix;
             }
 
             /**
@@ -408,11 +408,11 @@ namespace TSP
             /**
             * Functions to set and return the lower bound
             */
-            public int getLowerBound()
+            public double getLowerBound()
             {
                 return lowerBound;
             }
-            public void setLowerBound(int newLowerBound)
+            public void setLowerBound(double newLowerBound)
             {
                 lowerBound = newLowerBound;
             }
@@ -420,16 +420,142 @@ namespace TSP
             /**
             * Functions to set and return the cost matrix
             */
-            public int[,] getCostMatrix()
+            public double[,] getCostMatrix()
             {
                 return costMatrix;
             }
-            public void setCostMatrix(int[,] newMatrix)
+            public void setCostMatrix(double[,] newMatrix)
             {
                 costMatrix = newMatrix;
             }
 
         }
+        #endregion
+        #region HelperFunctions
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////// Helper Functions //////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * Helper Function to create an initial greedy solution to assign BSSF to in the beginning
+        */
+        double createGreedyInitialBSSF()
+        {
+            // Create variables to track progress
+            Route = new ArrayList();
+            Route.Add(Cities[0]);
+            int currCityIndex = 0;
+            
+            // While we haven't added |V| edges to our route
+            while (Route.Count < Cities.Length)
+            {
+                double minValue = double.MaxValue;
+                int minIndex = 0;
+
+                // Loop over all the cities and find the one with min cost to get to
+                for (int i = 0; i < Cities.Length; i++)
+                {
+                    // We don't want to be checking ourselves because that will be the minimum and it won't be a tour
+                    if (currCityIndex != i)
+                    {
+                        // We don't want to add a city that we already added because that forms a cycle and it won't be a tour
+                        if (!Route.Contains(Cities[i]))
+                        {
+                            double tempValue = Cities[currCityIndex].costToGetTo(Cities[i]);
+                            if (tempValue < minValue)
+                            {
+                                minValue = tempValue;
+                                minIndex = i;
+                            }
+                        }
+                    }
+                }
+
+                // Add the min edge to the Route by adding the destination city
+                currCityIndex = minIndex;
+                Route.Add(Cities[currCityIndex]);
+            }
+
+            // Once we have a complete tour, we set out BSSF to it as an upper bound for all solutions to follow
+            bssf = new TSPSolution(Route);
+            return bssf.costOfRoute();
+        }
+        /**
+        * Helper function to reduce a cost matrix and calculate the lower bound of the corresponding state
+        */
+        double reduceMatrix(ref double[,] costMatrix)
+        {
+            double lowerBound = 0;
+            // Loop through the rows, find the min value for each, and subtract it from every other cell value
+            for (int row = 0; row < Cities.Length; row++)
+            {
+                // Find The Minimum value in the row
+                double minVal = double.MaxValue;
+                for (int column = 0; column < Cities.Length; column++)
+                {
+                    if (costMatrix[row, column] < minVal)
+                    {
+                        minVal = costMatrix[row, column];
+                    }
+                }
+                lowerBound += minVal;
+                // Subtract the min value from each cell
+                for (int column = 0; column < Cities.Length; column++)
+                {
+                    costMatrix[row, column] -= minVal;
+                }
+            }
+
+            // Loop through the columns, find the minvalue for each and subtract it from every other cell value
+            for (int column = 0; column < Cities.Length; column++)
+            {
+                // Find The Minimum value in the row
+                double minVal = double.MaxValue;
+                for (int row = 0; row < Cities.Length; row++)
+                {
+                    if (costMatrix[row, column] < minVal)
+                    {
+                        minVal = costMatrix[row, column];
+                    }
+                }
+                lowerBound += minVal;
+                // Subtract the min value from each cell
+                for (int row = 0; row < Cities.Length; row++)
+                {
+                    costMatrix[row, column] -= minVal;
+                }
+            }
+
+            return lowerBound;
+        }
+        /**
+        * Helper function that will create the initial State starting at the first City in the list.
+        */
+        State createInitialState()
+        {
+            /* First Create the initial cost matrix based on the costs to get from each city to the other */
+            /* Loop through all the matrix cells, if we are at the diagonal then set the cost to infinity, else set it to the 
+               cost to get from city at rows(i) to city at columns(j) */
+            double[,] initialCostMatrix = new double[Cities.Length, Cities.Length];
+            for (int i = 0; i < Cities.Length; i++)
+            {
+                for (int j = 0; j < Cities.Length; j++)
+                {
+                    if (i == j)
+                        initialCostMatrix[i, j] = double.MaxValue;
+                    else
+                        initialCostMatrix[i, j] = Cities[i].costToGetTo(Cities[j]);
+                }
+            }
+            /* Second the path will be simply the starting node */
+            ArrayList path = new ArrayList();
+            path.Add(Cities[0]);
+
+            /* Third Calculate the lower Bound */
+            double lowerBound = reduceMatrix(ref initialCostMatrix);
+            return new State(path, lowerBound, initialCostMatrix);
+        }
+        #endregion
+        #region MainBBAlgorithm
         /// <summary>
         /// performs a Branch and Bound search of the state space of partial tours
         /// stops when time limit expires and uses BSSF as solution
@@ -439,8 +565,13 @@ namespace TSP
         {
             string[] results = new string[3];
 
-            // TODO: Add your implementation for a branch and bound solver here.
+            // Create the initial root State
+            State initialState = createInitialState();
 
+            // Create the initial BSSF Greedily
+            double BSSFCOST = createGreedyInitialBSSF();
+            
+            // Now that we have all the initial data that we need, start the recursive algorithm 
 
             results[COST] = "not implemented";    // load results into array here, replacing these dummy values
             results[TIME] = "-1";
@@ -448,7 +579,147 @@ namespace TSP
 
             return results;
         }
+        #endregion
+        #region PriorityQueue
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////// Priority Queue ////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public class PriorityQueueHeap
+        {
+            private int capacity;
+            private int count;
+            private int lastElement;
+            private int[] distances;
+            private int[] pointers;
+            public PriorityQueueHeap()
+            {
+            }
 
+            /**
+            * This functions returns whether the queue is empty or not. Time and Space = O(1) as it only involves an int comparison
+            */
+            public bool isEmpty()
+            {
+                return count == 0;
+            }
+
+            /**
+            * Helper method to print the contents of the queue. Time Complexity: O(|V|) where |V| is the number of nodes.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
+            public void printQueueContents()
+            {
+                Console.Write("The contents of the queue are: ");
+                for (int i = 1; i < capacity; i++)
+                {
+                    if (distances[i] != -1)
+                        Console.Write(distances[i] + " ");
+                }
+                Console.WriteLine();
+            }
+
+            /**
+            * This method creates an array to implement the queue. Time and Space Complexities are both O(|V|) where |V| is
+            * the number of nodes. This is because you create an array of the same size and specify the value for each item by 
+            * iterating over the entire array.
+            */
+            public void makeQueue(int numOfNodes)
+            {
+                distances = new int[numOfNodes + 1];
+                pointers = new int[numOfNodes];
+                for (int i = 1; i < numOfNodes + 1; i++)
+                {
+                    distances[i] = i - 1;
+                    pointers[i - 1] = i;
+                }
+                capacity = numOfNodes;
+                count = 0;
+                lastElement = capacity;
+            }
+
+            /**
+            * This method returns the index of the element with the minimum value and removes it from the queue. 
+            * Time Complexity: O(log(|V|)) because removing a node is constant time as we have its position in
+            * the queue, then to readjust the heap we just bubble up the min value which takes as long as 
+            * the depth of the tree which is log(|V|), where |V| is the number of nodes
+            * Space Complexity: O(1) because we don't create any extra variables that vary with the size of the input.
+            */
+            public int deleteMin(ref List<double> distanceArray)
+            {
+                // grab the node with min value which will be at the root
+                int minValue = distances[1];
+                count--;
+                //Console.WriteLine("last element is " + lastElement);
+                if (lastElement == -1)
+                    return minValue;
+                distances[1] = distances[lastElement];
+                pointers[distances[1]] = 1;
+                lastElement--;
+
+
+                // fix the heap
+                int indexIterator = 1;
+                while (indexIterator <= lastElement)
+                {
+                    // grab left child
+                    int smallerElementIndex = 2 * indexIterator;
+
+                    // if child does not exist, break
+                    if (smallerElementIndex > lastElement)
+                        break;
+
+                    // if right child exists and is of smaller value, pick it
+                    if (smallerElementIndex + 1 <= lastElement && distanceArray[distances[smallerElementIndex + 1]] < distanceArray[distances[smallerElementIndex]])
+                    {
+                        smallerElementIndex++;
+                    }
+
+                    if (distanceArray[distances[indexIterator]] > distanceArray[distances[smallerElementIndex]])
+                    {
+                        // set the node's value to that of its smaller child and update the iterator
+                        int temp = distances[smallerElementIndex];
+                        distances[smallerElementIndex] = distances[indexIterator];
+                        distances[indexIterator] = temp;
+
+                        pointers[distances[indexIterator]] = indexIterator;
+                        pointers[distances[smallerElementIndex]] = smallerElementIndex;
+                    }
+
+                    indexIterator = smallerElementIndex;
+                }
+                // return the min value
+                return minValue;
+            }
+
+            /**
+            * This method updates the nodes in the queue after inserting a new node
+            * Time Complexity: O(log(|V|)) as reording the heap works by bubbling up the min value to the top
+            * which takes as long as the depth of the tree which is log|V|.
+            * Space Complexity: O(1) as it does not create any extra variables that vary with the size of the input.
+            */
+            public void insert(ref List<double> distanceArray, int elementIndex)
+            {
+                // update the count
+                count++;
+
+                // as long as its parent has a larger value and have not hit the root
+                int indexIterator = pointers[elementIndex];
+                while (indexIterator > 1 && distanceArray[distances[indexIterator / 2]] > distanceArray[distances[indexIterator]])
+                {
+                    // swap the two nodes
+                    int temp = distances[indexIterator / 2];
+                    distances[indexIterator / 2] = distances[indexIterator];
+                    distances[indexIterator] = temp;
+
+                    // update the pointers array
+                    pointers[distances[indexIterator / 2]] = indexIterator / 2;
+                    pointers[distances[indexIterator]] = indexIterator;
+
+                    indexIterator /= 2;
+                }
+            }
+        }
+        #endregion
         /////////////////////////////////////////////////////////////////////////////////////////////
         // These additional solver methods will be implemented as part of the group project.
         ////////////////////////////////////////////////////////////////////////////////////////////
@@ -475,7 +746,7 @@ namespace TSP
             string[] results = new string[3];
 
             // TODO: Add your implementation for your advanced solver here.
-
+           
             results[COST] = "not implemented";    // load results into array here, replacing these dummy values
             results[TIME] = "-1";
             results[COUNT] = "-1";
