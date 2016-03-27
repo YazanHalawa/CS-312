@@ -370,6 +370,66 @@ namespace TSP
             return results;
         }
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////// State Class //////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        /**
+        * This class represents the state at each node in the branch and bound algorithm. It contains
+        * 
+        */
+        class State
+        {
+            private ArrayList path;
+            private int lowerBound;
+            private int[,] costMatrix;
+
+            /**
+            * Constructor
+            */
+            public State(int numOfCities)
+            {
+                path = new ArrayList();
+                lowerBound = 0;
+                costMatrix = new int[numOfCities, numOfCities];
+            }
+
+            /**
+            * Functions to Manipulate and return the path
+            */
+            public ArrayList getPath()
+            {
+                return path;
+            }
+            public void addCityToPath(City newCity)
+            {
+                path.Add(newCity);
+            }
+
+            /**
+            * Functions to set and return the lower bound
+            */
+            public int getLowerBound()
+            {
+                return lowerBound;
+            }
+            public void setLowerBound(int newLowerBound)
+            {
+                lowerBound = newLowerBound;
+            }
+
+            /**
+            * Functions to set and return the cost matrix
+            */
+            public int[,] getCostMatrix()
+            {
+                return costMatrix;
+            }
+            public void setCostMatrix(int[,] newMatrix)
+            {
+                costMatrix = newMatrix;
+            }
+
+        }
         /// <summary>
         /// performs a Branch and Bound search of the state space of partial tours
         /// stops when time limit expires and uses BSSF as solution

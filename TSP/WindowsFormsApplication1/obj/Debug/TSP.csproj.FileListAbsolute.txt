@@ -7,3 +7,6 @@ C:\Users\Dan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplicat
 C:\Users\Dan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.csproj.GenerateResource.Cache
 C:\Users\Dan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.exe
 C:\Users\Dan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.pdb
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.exe.config
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.exe
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.pdb
