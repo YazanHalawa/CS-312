@@ -389,7 +389,7 @@ namespace TSP
             /**
             * Constructor
             */
-            public State(ArrayList newPath, double newLowerBound, double[,] newCostMatrix)
+            public State(ArrayList newPath, double newLowerBound, double[,] newCostMatrix, int length)
             {
                 path = newPath;
                 lowerBound = newLowerBound;
@@ -439,10 +439,6 @@ namespace TSP
             public double[,] getCostMatrix()
             {
                 return costMatrix;
-            }
-            public void setCostMatrix(double[,] newMatrix)
-            {
-                costMatrix = newMatrix;
             }
 
         }
@@ -542,12 +538,17 @@ namespace TSP
                         minVal = costMatrix[row, column];
                     }
                 }
-                lowerBound += minVal;
-                // Subtract the min value from each cell
-                for (int column = 0; column < Cities.Length; column++)
+
+                // Subtract the min value from each cell if the min value is not infinity
+                if (minVal != double.MaxValue)
                 {
-                    costMatrix[row, column] -= minVal;
-                }
+                    lowerBound += minVal;
+                    for (int column = 0; column < Cities.Length; column++)
+                    {
+                        if (costMatrix[row, column] != double.MaxValue)
+                            costMatrix[row, column] -= minVal;
+                    }
+                }            
             }
 
             // Loop through the columns, find the minvalue for each and subtract it from every other cell value
@@ -562,12 +563,16 @@ namespace TSP
                         minVal = costMatrix[row, column];
                     }
                 }
-                lowerBound += minVal;
-                // Subtract the min value from each cell
-                for (int row = 0; row < Cities.Length; row++)
+                // Subtract the min value from each cell if the min value is not infinity
+                if (minVal != double.MaxValue)
                 {
-                    costMatrix[row, column] -= minVal;
-                }
+                    lowerBound += minVal;
+                    for (int row = 0; row < Cities.Length; row++)
+                    {
+                        if (costMatrix[row, column] != double.MaxValue)
+                            costMatrix[row, column] -= minVal;
+                    }
+                }            
             }
 
             return lowerBound;
@@ -597,7 +602,7 @@ namespace TSP
 
             /* Third Calculate the lower Bound */
             double lowerBound = reduceMatrix(ref initialCostMatrix);
-            return new State(path, lowerBound, initialCostMatrix);
+            return new State(path, lowerBound, initialCostMatrix, Cities.Length);
         }
         #endregion
         /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -619,7 +624,7 @@ namespace TSP
 
             // Initialize the time variable to stop after the time limit, which is defaulted to 60 seconds
             DateTime start = DateTime.Now;
-            DateTime end = start.AddSeconds(time_limit);
+            DateTime end = start.AddSeconds(time_limit/1000);
 
             // Create the initial root State and set its priority to its lower bound as we don't have any extra info at this point
             State initialState = createInitialState();
@@ -656,33 +661,41 @@ namespace TSP
                             continue;
 
                         // Create the State
-                        double[,] costReducedMatrix = new double[Cities.Length, Cities.Length];
-                        setUpMatrix(ref costReducedMatrix, Array.IndexOf(Cities, currState), i);
-                        double newLB = reduceMatrix(ref costReducedMatrix);
-                        ArrayList newPath = currState.getPath();
+                        double[,] costReducedMatrix = currState.getCostMatrix();
+                        City lastCityinCurrState = (City)currState.getPath()[currState.getPath().Count-1];
+                        setUpMatrix(ref costReducedMatrix, Array.IndexOf(Cities, lastCityinCurrState), i);
+                        double newLB = currState.getLowerBound() + reduceMatrix(ref costReducedMatrix);
+                        ArrayList oldPath = currState.getPath();
+                        ArrayList newPath = new ArrayList();
+                        newPath = (ArrayList)oldPath.Clone();
                         newPath.Add(Cities[i]);
-                        State childState = new State(newPath, newLB, costReducedMatrix);
+                        State childState = new State(newPath, newLB, costReducedMatrix, Cities.Length);
 
-                        // If we found a solution
-                        if (childState.getLowerBound() < BSSFBOUND && childState.getPath().Count == Cities.Length)
+                        // Prune States larger than the BSSF
+                        if (childState.getLowerBound() < BSSFBOUND)
                         {
-                            bssf = new TSPSolution(childState.getPath());
-                            BSSFBOUND = childState.getLowerBound();
-                            numOfSolutions++;
-                        }
-                        else
-                        {
-                            // Set the priority for the state and add the new state to the queue
-                            childState.setPriority(calculateKey(numOfCitiesLeft, childState.getLowerBound()));
-                            queue.insert(childState);
+                            // If we found a solution
+                            if (childState.getPath().Count == Cities.Length)
+                            {
+                                bssf = new TSPSolution(childState.getPath());
+                                BSSFBOUND = bssf.costOfRoute();
+                                numOfSolutions++;
+                            }
+                            else
+                            {
+                                // Set the priority for the state and add the new state to the queue
+                                childState.setPriority(calculateKey(numOfCitiesLeft, childState.getLowerBound()));
+                                queue.insert(childState);
+                            }
                         }             
                     }           
                 }
             }
             end = DateTime.Now;
-
+            TimeSpan diff = end - start;
+            double seconds = diff.TotalSeconds;
             results[COST] = System.Convert.ToString(bssf.costOfRoute());    // load results into array here, replacing these dummy values
-            results[TIME] = System.Convert.ToString(end-start);
+            results[TIME] = System.Convert.ToString(seconds);
             results[COUNT] = System.Convert.ToString(numOfSolutions);
 
             return results;
@@ -696,9 +709,7 @@ namespace TSP
         {
             private int capacity;
             private int count;
-            private int lastElement;
             private State[] states;
-            private int[] pointers;
             public PriorityQueueHeap()
             {
             }
@@ -726,7 +737,7 @@ namespace TSP
             */
             public void makeQueue(int numOfNodes)
             {
-                states = new State[numOfNodes + 1];
+                states = new State[1000000];
                 capacity = numOfNodes;
                 count = 0;
             }
@@ -743,6 +754,7 @@ namespace TSP
                 // grab the node with min value which will be at the root
                 State minValue = states[1];
                 count--;
+                states[1].setPriority(double.MaxValue);
 
                 // fix the heap
                 int indexIterator = 1;
