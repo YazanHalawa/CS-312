@@ -486,6 +486,10 @@ namespace TSP
                             double tempValue = Cities[currCityIndex].costToGetTo(Cities[i]);
                             if (tempValue < minValue)
                             {
+                                if (Route.Count == Cities.Length - 1 && Cities[i].costToGetTo(Cities[0]) == double.MaxValue)
+                                {
+                                    continue;
+                                }
                                 minValue = tempValue;
                                 minIndex = i;
                             }
@@ -540,7 +544,7 @@ namespace TSP
                 }
 
                 // Subtract the min value from each cell if the min value is not infinity
-                if (minVal != double.MaxValue)
+                if (minVal != 0 && minVal != double.MaxValue)
                 {
                     lowerBound += minVal;
                     for (int column = 0; column < Cities.Length; column++)
@@ -564,7 +568,7 @@ namespace TSP
                     }
                 }
                 // Subtract the min value from each cell if the min value is not infinity
-                if (minVal != double.MaxValue)
+                if (minVal != 0 && minVal != double.MaxValue)
                 {
                     lowerBound += minVal;
                     for (int row = 0; row < Cities.Length; row++)
@@ -628,7 +632,7 @@ namespace TSP
 
             // Create the initial root State and set its priority to its lower bound as we don't have any extra info at this point
             State initialState = createInitialState();
-            initialState.setPriority(initialState.getLowerBound());
+            initialState.setPriority(calculateKey(numOfCitiesLeft, initialState.getLowerBound()));
 
             // Create the initial BSSF Greedily
             double BSSFBOUND = createGreedyInitialBSSF();
@@ -637,7 +641,6 @@ namespace TSP
             PriorityQueueHeap queue = new PriorityQueueHeap();
             queue.makeQueue(Cities.Length);
             queue.insert(initialState);
-            numOfCitiesLeft--;
 
             // Branch and Bound until the queue is empty, we have exceeded the time limit, or we found the optimal solution
             while (!queue.isEmpty() && DateTime.Now < end && BSSFBOUND != queue.getMinLB())
@@ -653,7 +656,7 @@ namespace TSP
                     for (int i = 0; i < Cities.Length; i++)
                     {
                         // First check that we haven't exceeded the time limit
-                        if (DateTime.Now > end)
+                        if (DateTime.Now >= end)
                             break;
 
                         // Make sure we are only checking cities that we haven't checked already
@@ -674,10 +677,15 @@ namespace TSP
                         // Prune States larger than the BSSF
                         if (childState.getLowerBound() < BSSFBOUND)
                         {
-                            // If we found a solution
-                            if (childState.getPath().Count == Cities.Length)
+                            City firstCity = (City)childState.getPath()[0];
+                            City lastCity = (City)childState.getPath()[childState.getPath().Count-1];
+                            double costToLoopBack = lastCity.costToGetTo(firstCity); 
+
+                            // If we found a solution and it goes back from last city to first city
+                            if (childState.getPath().Count == Cities.Length && costToLoopBack != double.MaxValue)
                             {
                                 bssf = new TSPSolution(childState.getPath());
+                                Console.WriteLine(childState.getLowerBound());
                                 BSSFBOUND = bssf.costOfRoute();
                                 numOfSolutions++;
                             }
@@ -737,7 +745,7 @@ namespace TSP
             */
             public void makeQueue(int numOfNodes)
             {
-                states = new State[1000000];
+                states = new State[100000000];
                 capacity = numOfNodes;
                 count = 0;
             }
@@ -753,9 +761,9 @@ namespace TSP
             {
                 // grab the node with min value which will be at the root
                 State minValue = states[1];
+                //states[1].setPriority(double.MaxValue);
+                states[1] = states[count];
                 count--;
-                states[1].setPriority(double.MaxValue);
-
                 // fix the heap
                 int indexIterator = 1;
                 while (indexIterator <= count)
@@ -802,7 +810,7 @@ namespace TSP
 
                 // as long as its parent has a larger value and have not hit the root
                 int indexIterator = count;
-                while (indexIterator > 1 && states[indexIterator / 2].getPriority() < states[indexIterator].getPriority())
+                while (indexIterator > 1 && states[indexIterator / 2].getPriority() > states[indexIterator].getPriority())
                 {
                     // swap the two nodes
                     State temp = states[indexIterator / 2];
