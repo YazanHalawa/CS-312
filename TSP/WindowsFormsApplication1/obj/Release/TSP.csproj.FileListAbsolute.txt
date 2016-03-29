@@ -6,3 +6,4 @@ C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsAppl
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\TSP.csproj.GenerateResource.Cache
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsApplication1.exe
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsApplication1.pdb
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\TSP.csprojResolveAssemblyReference.cache

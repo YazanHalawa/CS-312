@@ -509,8 +509,10 @@ namespace TSP
         /**
         * Helper Function to initially set up a cost matrix at a current state
         */ 
-        void setUpMatrix(ref double[,] costMatrix, int indexOfParent, int indexOfChild)
+        void setUpMatrix(ref double[,] costMatrix, int indexOfParent, int indexOfChild, ref double lowerBound)
         {
+            if (costMatrix[indexOfParent, indexOfChild] != double.MaxValue)
+                lowerBound += costMatrix[indexOfParent, indexOfChild];
             // Make sure to set all costs coming from the currState to infinity
             for (int column = 0; column < Cities.Length; column++)
             {
@@ -677,8 +679,9 @@ namespace TSP
                             }
                         } 
                         City lastCityinCurrState = (City)currState.getPath()[currState.getPath().Count-1];
-                        setUpMatrix(ref newCostMatrix, Array.IndexOf(Cities, lastCityinCurrState), i);
-                        double newLB = currState.getLowerBound() + reduceMatrix(ref newCostMatrix);
+                        double oldLB = currState.getLowerBound();
+                        setUpMatrix(ref newCostMatrix, Array.IndexOf(Cities, lastCityinCurrState), i, ref oldLB);
+                        double newLB = oldLB + reduceMatrix(ref newCostMatrix);
                         ArrayList oldPath = currState.getPath();
                         ArrayList newPath = new ArrayList();
                         foreach (City c in oldPath)
@@ -703,7 +706,7 @@ namespace TSP
                                 bssf = new TSPSolution(childState.getPath());
                                 //Console.WriteLine("lower bound is " + childState.getLowerBound() +
                                 //                    "and BSSF is " + BSSFBOUND);
-                                BSSFBOUND = childState.getLowerBound();
+                                BSSFBOUND = bssf.costOfRoute();
                                 numOfSolutions++;
                             }
                             else
@@ -720,6 +723,7 @@ namespace TSP
                         }             
                     }           
                 }
+                currState = null;
             }
             end = DateTime.Now;
             TimeSpan diff = end - start;
