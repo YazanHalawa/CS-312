@@ -389,7 +389,7 @@ namespace TSP
             /**
             * Constructor
             */
-            public State(ArrayList newPath, double newLowerBound, double[,] newCostMatrix, int length)
+            public State(ref ArrayList newPath, ref double newLowerBound, ref double[,] newCostMatrix, int length)
             {
                 path = newPath;
                 lowerBound = newLowerBound;
@@ -606,7 +606,7 @@ namespace TSP
 
             /* Third Calculate the lower Bound */
             double lowerBound = reduceMatrix(ref initialCostMatrix);
-            return new State(path, lowerBound, initialCostMatrix, Cities.Length);
+            return new State(ref path, ref lowerBound, ref initialCostMatrix, Cities.Length);
         }
         #endregion
         /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -625,6 +625,8 @@ namespace TSP
             // Helper variables
             int numOfCitiesLeft = Cities.Length;
             int numOfSolutions = 0;
+            int numOfStatesCreated = 0;
+            int numOfStatesPruned = 0;
 
             // Initialize the time variable to stop after the time limit, which is defaulted to 60 seconds
             DateTime start = DateTime.Now;
@@ -632,7 +634,8 @@ namespace TSP
 
             // Create the initial root State and set its priority to its lower bound as we don't have any extra info at this point
             State initialState = createInitialState();
-            initialState.setPriority(calculateKey(numOfCitiesLeft, initialState.getLowerBound()));
+            numOfStatesCreated++;
+            initialState.setPriority(calculateKey(numOfCitiesLeft - 1, initialState.getLowerBound()));
 
             // Create the initial BSSF Greedily
             double BSSFBOUND = createGreedyInitialBSSF();
@@ -643,11 +646,10 @@ namespace TSP
             queue.insert(initialState);
 
             // Branch and Bound until the queue is empty, we have exceeded the time limit, or we found the optimal solution
-            while (!queue.isEmpty() && DateTime.Now < end && BSSFBOUND != queue.getMinLB())
+            while (!queue.isEmpty() && DateTime.Now < end && queue.getMinLB() != BSSFBOUND)
             {
                 // Grab the next state in the queue
                 State currState = queue.deleteMin();
-                numOfCitiesLeft--;
 
                 // check if lower bound is less than the BSSF, else prune it
                 if (currState.getLowerBound() < BSSFBOUND)
@@ -664,37 +666,57 @@ namespace TSP
                             continue;
 
                         // Create the State
-                        double[,] costReducedMatrix = currState.getCostMatrix();
+                        double[,] oldCostMatrix = currState.getCostMatrix();
+                        double[,] newCostMatrix = new double[Cities.Length, Cities.Length];
+                        // Copy the old array in the new one to modify the new without affecting the old
+                        for (int k = 0; k < Cities.Length; k++)
+                        {
+                            for (int l = 0; l < Cities.Length; l++)
+                            {
+                                newCostMatrix[k, l] = oldCostMatrix[k, l];
+                            }
+                        } 
                         City lastCityinCurrState = (City)currState.getPath()[currState.getPath().Count-1];
-                        setUpMatrix(ref costReducedMatrix, Array.IndexOf(Cities, lastCityinCurrState), i);
-                        double newLB = currState.getLowerBound() + reduceMatrix(ref costReducedMatrix);
+                        setUpMatrix(ref newCostMatrix, Array.IndexOf(Cities, lastCityinCurrState), i);
+                        double newLB = currState.getLowerBound() + reduceMatrix(ref newCostMatrix);
                         ArrayList oldPath = currState.getPath();
                         ArrayList newPath = new ArrayList();
-                        newPath = (ArrayList)oldPath.Clone();
+                        foreach (City c in oldPath)
+                        {
+                            newPath.Add(c);
+                        }
                         newPath.Add(Cities[i]);
-                        State childState = new State(newPath, newLB, costReducedMatrix, Cities.Length);
+                        State childState = new State(ref newPath, ref newLB, ref newCostMatrix, Cities.Length);
+                        numOfStatesCreated++;
 
                         // Prune States larger than the BSSF
                         if (childState.getLowerBound() < BSSFBOUND)
                         {
                             City firstCity = (City)childState.getPath()[0];
                             City lastCity = (City)childState.getPath()[childState.getPath().Count-1];
-                            double costToLoopBack = lastCity.costToGetTo(firstCity); 
+                            double costToLoopBack = lastCity.costToGetTo(firstCity);
 
                             // If we found a solution and it goes back from last city to first city
                             if (childState.getPath().Count == Cities.Length && costToLoopBack != double.MaxValue)
                             {
+                                childState.setLowerBound(childState.getLowerBound() + costToLoopBack);
                                 bssf = new TSPSolution(childState.getPath());
-                                Console.WriteLine(childState.getLowerBound());
-                                BSSFBOUND = bssf.costOfRoute();
+                                //Console.WriteLine("lower bound is " + childState.getLowerBound() +
+                                //                    "and BSSF is " + BSSFBOUND);
+                                BSSFBOUND = childState.getLowerBound();
                                 numOfSolutions++;
                             }
                             else
                             {
                                 // Set the priority for the state and add the new state to the queue
+                                numOfCitiesLeft = Cities.Length - childState.getPath().Count;
                                 childState.setPriority(calculateKey(numOfCitiesLeft, childState.getLowerBound()));
                                 queue.insert(childState);
                             }
+                        }
+                        else
+                        {
+                            numOfStatesPruned++;
                         }             
                     }           
                 }
@@ -745,7 +767,7 @@ namespace TSP
             */
             public void makeQueue(int numOfNodes)
             {
-                states = new State[100000000];
+                states = new State[1000000];
                 capacity = numOfNodes;
                 count = 0;
             }

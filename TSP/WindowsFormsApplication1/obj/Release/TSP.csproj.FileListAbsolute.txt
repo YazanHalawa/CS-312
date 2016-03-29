@@ -1,0 +1,8 @@
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Release\WindowsFormsApplication1.exe.config
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Release\WindowsFormsApplication1.exe
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\bin\Release\WindowsFormsApplication1.pdb
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\TSP.mainform.resources
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsApplication1.Properties.Resources.resources
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\TSP.csproj.GenerateResource.Cache
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsApplication1.exe
+C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Release\WindowsFormsApplication1.pdb
