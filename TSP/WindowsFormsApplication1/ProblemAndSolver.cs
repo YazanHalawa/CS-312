@@ -459,7 +459,7 @@ namespace TSP
             if (numofCitiesLeft < 1)
                 return lowerBound;
             else
-                return lowerBound + numofCitiesLeft * 31; // The number 31 was picked because it is a prime number
+                return lowerBound / (Cities.Length - numofCitiesLeft); // The number 31 was picked because it is a prime number
         }
         /**
         * Helper Function to create an initial greedy solution to assign BSSF to in the beginning
@@ -765,6 +765,7 @@ namespace TSP
             numOfStatesNotExpanded += queue.getSize(); // if the code terminated before queue is empty, then those states never got expanded
             Console.WriteLine("Number of states generated: " + numOfStatesCreated);
             Console.WriteLine("Number of states not Expanded: " + numOfStatesNotExpanded);
+            Console.WriteLine("Max Number of states put in queue: " + queue.getMaxNumOfItems());
             end = DateTime.Now;
             TimeSpan diff = end - start;
             double seconds = diff.TotalSeconds;
@@ -783,6 +784,7 @@ namespace TSP
         {
             private int capacity;
             private int count;
+            private int maxNum;
             private State[] states;
             public PriorityQueueHeap()
             {
@@ -821,6 +823,7 @@ namespace TSP
                 states = new State[1000000];
                 capacity = numOfNodes;
                 count = 0;
+                maxNum = 0;
             }
 
             /**
@@ -870,6 +873,13 @@ namespace TSP
             }
 
             /**
+            * This function returns the maximum number of items ever put in the queue
+            */
+            public int getMaxNumOfItems()
+            {
+                return maxNum;
+            }
+            /**
             * This method updates the nodes in the queue after inserting a new node
             * Time Complexity: O(log(|V|)) as reording the heap works by bubbling up the min value to the top
             * which takes as long as the depth of the tree which is log|V|.
@@ -880,6 +890,8 @@ namespace TSP
                 // update the count
                 count++;
                 states[count] = newState;
+                if (count > maxNum)
+                    maxNum = count;
 
                 // as long as its parent has a larger value and have not hit the root
                 int indexIterator = count;
