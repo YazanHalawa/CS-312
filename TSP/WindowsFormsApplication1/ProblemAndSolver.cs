@@ -376,7 +376,7 @@ namespace TSP
         /////////////////////////////////////////////////////////////////////////////////////////////////
         #region StateClass
         /**
-        * This class represents the state at each node in the branch and bound algorithm. It contains
+        * This class represents the state at each node in the branch and bound algorithm.
         * 
         */
         public class State
@@ -449,6 +449,9 @@ namespace TSP
         #region HelperFunctions
         /**
         * Helper Function to create a key value for a state for use in priority queue
+        * Time Complexity: O(1) as it only perform a mathematical addition and multiplication, and if we 
+        * assume n is the size of the input then those would be constant operations
+        * Space Complexity: O(1) as it does not create any extra data structures that depend on the size of the input.
         */
         double calculateKey(int numofCitiesLeft, double lowerBound)
         {
@@ -460,6 +463,10 @@ namespace TSP
         }
         /**
         * Helper Function to create an initial greedy solution to assign BSSF to in the beginning
+        * Time Complexity: O(n^2) because for each city it is iterating over all the cities in the list. so n is the 
+        * number of cities, or rather |V|
+        * Space Complexity: O(n) as it creates an Array list(Route) of size equal to the number of cities in the graph where
+        * n is the number of cities, or rather |V|
         */
         double createGreedyInitialBSSF()
         {
@@ -508,6 +515,10 @@ namespace TSP
         }
         /**
         * Helper Function to initially set up a cost matrix at a current state
+        * Time Complexity: O(n) as it iterates over one row and one column in the matrix and n would be the length of 
+        * the row/column which is the number of cities in the graph, or rather |V|
+        * Space Complexity: O(1) as all the data is passed by reference and the function does not create extra
+        * data structures that depend on the size of the input.
         */ 
         void setUpMatrix(ref double[,] costMatrix, int indexOfParent, int indexOfChild, ref double lowerBound)
         {
@@ -528,6 +539,10 @@ namespace TSP
         }
         /**
         * Helper function to reduce a cost matrix and calculate the lower bound of the corresponding state
+        * Time Complexity: O(n^2) because it iterates over all the cells in an nxn matrix 2 times (so really it is
+        * O(4n^2) but the constant is ommitted.
+        * Space Complexity: O(1) as the matrix is passed by reference and so the function does not create 
+        * any data structures that depend on the size of the input
         */
         double reduceMatrix(ref double[,] costMatrix)
         {
@@ -585,12 +600,17 @@ namespace TSP
         }
         /**
         * Helper function that will create the initial State starting at the first City in the list.
+        * Time Complexity: summing up the time complexities of the parts of this function as explained in the code:
+        * n^2 + 1 + n^2 = O(n^2) because constants are ommitted
+        * Space Complexity: summing up the space complexities of the parts of this function as explained in the code:
+        * n^2 + 1 + 1 = O(n^2) because constants are ommitted.
         */
         State createInitialState()
         {
             /* First Create the initial cost matrix based on the costs to get from each city to the other */
             /* Loop through all the matrix cells, if we are at the diagonal then set the cost to infinity, else set it to the 
                cost to get from city at rows(i) to city at columns(j) */
+            /* This part takes O(n^2) time and O(n^2) space*/
             double[,] initialCostMatrix = new double[Cities.Length, Cities.Length];
             for (int i = 0; i < Cities.Length; i++)
             {
@@ -603,10 +623,12 @@ namespace TSP
                 }
             }
             /* Second the path will be simply the starting node */
+            /* This part takes O(1) time and space */
             ArrayList path = new ArrayList();
             path.Add(Cities[0]);
 
             /* Third Calculate the lower Bound */
+            /* This part takes O(n^2) time and O(1) space */
             double lowerBound = reduceMatrix(ref initialCostMatrix);
             return new State(ref path, ref lowerBound, ref initialCostMatrix, Cities.Length);
         }
@@ -618,36 +640,48 @@ namespace TSP
         /// <summary>
         /// performs a Branch and Bound search of the state space of partial tours
         /// stops when time limit expires and uses BSSF as solution
+        /// Time Complexity: 
+        /// Space Complexity:
         /// </summary>
         /// <returns>results array for GUI that contains three ints: cost of solution, time spent to find solution, number of solutions found during search (not counting initial BSSF estimate)</returns>
+
         public string[] bBSolveProblem()
         {
             string[] results = new string[3];
             
             // Helper variables
+            /* This part of the code takes O(1) space and time as we are just initializing some data */
             int numOfCitiesLeft = Cities.Length;
             int numOfSolutions = 0;
             int numOfStatesCreated = 0;
-            int numOfStatesPruned = 0;
+            int numOfStatesNotExpanded = 0;
 
             // Initialize the time variable to stop after the time limit, which is defaulted to 60 seconds
+            /* This part of the code takes O(1) space and time as we are just initializing some data */
             DateTime start = DateTime.Now;
             DateTime end = start.AddSeconds(time_limit/1000);
 
             // Create the initial root State and set its priority to its lower bound as we don't have any extra info at this point
+            /* This part of the code takes O(n^2) space and time as explained above */
             State initialState = createInitialState();
             numOfStatesCreated++;
             initialState.setPriority(calculateKey(numOfCitiesLeft - 1, initialState.getLowerBound()));
 
             // Create the initial BSSF Greedily
+            /* This part of the code takes O(n^2) time and O(n) space as explained above */
             double BSSFBOUND = createGreedyInitialBSSF();
 
             // Create the queue and add the initial state to it, then subtract the number of cities left
+            /* This part of the code takes O(1) time since we are just creating a data structure and 
+            O(1,000,000) space which is just a constant so O(1) space as well*/
             PriorityQueueHeap queue = new PriorityQueueHeap();
             queue.makeQueue(Cities.Length);
             queue.insert(initialState);
 
             // Branch and Bound until the queue is empty, we have exceeded the time limit, or we found the optimal solution
+            /* This loop will have a iterate 2^n times approximately with expanding and pruning for each state, then for each state it
+            does O(n^2) work by reducing the matrix, so over all O((n^2)*(2^n)) time and space as well as it creates a nxn 
+            matrix for each state*/
             while (!queue.isEmpty() && DateTime.Now < end && queue.getMinLB() != BSSFBOUND)
             {
                 // Grab the next state in the queue
@@ -708,6 +742,7 @@ namespace TSP
                                 //                    "and BSSF is " + BSSFBOUND);
                                 BSSFBOUND = bssf.costOfRoute();
                                 numOfSolutions++;
+                                numOfStatesNotExpanded++; // this state is not expanded because it is not put on the queue
                             }
                             else
                             {
@@ -719,12 +754,15 @@ namespace TSP
                         }
                         else
                         {
-                            numOfStatesPruned++;
+                            numOfStatesNotExpanded++; // States that are pruned are not expanded
                         }             
                     }           
                 }
                 currState = null;
             }
+            numOfStatesNotExpanded += queue.getSize(); // if the code terminated before queue is empty, then those states never got expanded
+            Console.WriteLine("Number of states generated: " + numOfStatesCreated);
+            Console.WriteLine("Number of states not Expanded: " + numOfStatesNotExpanded);
             end = DateTime.Now;
             TimeSpan diff = end - start;
             double seconds = diff.TotalSeconds;
@@ -756,6 +794,13 @@ namespace TSP
                 return count == 0;
             }
 
+            /**
+            * This function returns the number of items in the queue
+            */
+            public int getSize()
+            {
+                return count;
+            }
             /**
             * This function returns the lower bound of the first item in the queue
             */
