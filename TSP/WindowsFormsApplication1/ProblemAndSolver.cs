@@ -640,8 +640,10 @@ namespace TSP
         /// <summary>
         /// performs a Branch and Bound search of the state space of partial tours
         /// stops when time limit expires and uses BSSF as solution
-        /// Time Complexity: 
-        /// Space Complexity:
+        /// Time Complexity: O((n^2)*(2^n) as that is the most dominant factor in the code, and it is a result
+        /// of the loop, for more details scroll to the comment above the loop in the function.
+        /// Space Complexity: O((n^2)*(2^n) as that is the most dominant factor in the code, and it is a result
+        /// of the loop, for more details scroll to the comment above the loop in the function.
         /// </summary>
         /// <returns>results array for GUI that contains three ints: cost of solution, time spent to find solution, number of solutions found during search (not counting initial BSSF estimate)</returns>
 
