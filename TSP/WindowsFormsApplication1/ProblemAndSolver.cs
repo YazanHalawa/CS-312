@@ -459,7 +459,7 @@ namespace TSP
             if (numofCitiesLeft < 1)
                 return lowerBound;
             else
-                return lowerBound / (Cities.Length - numofCitiesLeft); // The number 31 was picked because it is a prime number
+                return lowerBound / (Cities.Length - numofCitiesLeft);
         }
         /**
         * Helper Function to create an initial greedy solution to assign BSSF to in the beginning
@@ -740,8 +740,6 @@ namespace TSP
                             {
                                 childState.setLowerBound(childState.getLowerBound() + costToLoopBack);
                                 bssf = new TSPSolution(childState.getPath());
-                                //Console.WriteLine("lower bound is " + childState.getLowerBound() +
-                                //                    "and BSSF is " + BSSFBOUND);
                                 BSSFBOUND = bssf.costOfRoute();
                                 numOfSolutions++;
                                 numOfStatesNotExpanded++; // this state is not expanded because it is not put on the queue
