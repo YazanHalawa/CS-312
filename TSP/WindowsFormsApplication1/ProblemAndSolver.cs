@@ -919,11 +919,73 @@ namespace TSP
         {
             string[] results = new string[3];
 
-            // TODO: Add your implementation for a greedy solver here.
+            // Initialize the time variable to stop after the time limit, which is defaulted to 60 seconds
+            /* This part of the code takes O(1) space and time as we are just initializing some data */
+            DateTime start = DateTime.Now;
+            DateTime end = start.AddSeconds(time_limit / 1000);
+            Random random = new Random();
+            Route = new ArrayList();
 
-            results[COST] = "not implemented";    // load results into array here, replacing these dummy values
-            results[TIME] = "-1";
-            results[COUNT] = "-1";
+            while (DateTime.Now < end && Route.Count < Cities.Length)
+            {
+                // Create variables to track progress
+                Route.Add(Cities[random.Next(0, Cities.Length)]);
+                int currCityIndex = 0;
+
+                // While we haven't added |V| edges to our route
+                while (Route.Count < Cities.Length)
+                {
+                    double minValue = double.MaxValue;
+                    int minIndex = 0;
+
+                    // Loop over all the cities and find the one with min cost to get to
+                    for (int i = 0; i < Cities.Length; i++)
+                    {
+                        // We don't want to be checking ourselves because that will be the minimum and it won't be a tour
+                        if (currCityIndex != i)
+                        {
+                            // We don't want to add a city that we already added because that forms a cycle and it won't be a tour
+                            if (!Route.Contains(Cities[i]))
+                            {
+                                double tempValue = Cities[currCityIndex].costToGetTo(Cities[i]);
+                                if (tempValue < minValue)
+                                {
+                                    if (Route.Count == Cities.Length - 1 && Cities[i].costToGetTo(Cities[0]) == double.MaxValue)
+                                    {
+                                        continue;
+                                    }
+                                    minValue = tempValue;
+                                    minIndex = i;
+                                }
+                            }
+                        }
+                    }
+
+                    // Add the min edge to the Route by adding the destination city
+                    currCityIndex = minIndex;
+                    Route.Add(Cities[currCityIndex]);
+                }
+
+                City lastCity = (City)(Route[Route.Count - 1]);
+                City firstCity = (City)(Route[0]);
+                if (lastCity.costToGetTo(firstCity) == double.MaxValue)
+                {
+                    Route.Clear();
+                }
+            
+            }
+
+            int numOfSolutions = 0;
+            if (Route.Count == Cities.Length)
+                numOfSolutions = 1;
+            // Display the results
+            bssf = new TSPSolution(Route);
+            end = DateTime.Now;
+            TimeSpan diff = end - start;
+            double seconds = diff.TotalSeconds;
+            results[COST] = System.Convert.ToString(bssf.costOfRoute());    // load results into array here, replacing these dummy values
+            results[TIME] = System.Convert.ToString(seconds);
+            results[COUNT] = System.Convert.ToString(numOfSolutions);
 
             return results;
         }
@@ -936,7 +998,7 @@ namespace TSP
            
             results[COST] = "not implemented";    // load results into array here, replacing these dummy values
             results[TIME] = "-1";
-            results[COUNT] = "-1";
+            results[COUNT] = "1";
 
             return results;
         }
