@@ -16,3 +16,6 @@ C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.csprojResolveA
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.mainform.resources
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.Properties.Resources.resources
 C:\Users\Yazan\Desktop\TSP\WindowsFormsApplication1\obj\Debug\TSP.csproj.GenerateResource.Cache
+C:\Users\Adam\Documents\Visual Studio 2013\Projects\CS312\GroupProject\CS-312\TSP\WindowsFormsApplication1\bin\Debug\WindowsFormsApplication1.exe.config
+C:\Users\Adam\Documents\Visual Studio 2013\Projects\CS312\GroupProject\CS-312\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.exe
+C:\Users\Adam\Documents\Visual Studio 2013\Projects\CS312\GroupProject\CS-312\TSP\WindowsFormsApplication1\obj\Debug\WindowsFormsApplication1.pdb

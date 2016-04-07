@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 using System.Diagnostics;
+using System.Linq;
 
 
 namespace TSP
@@ -976,8 +977,6 @@ namespace TSP
             }
 
             int numOfSolutions = 0;
-            if (Route.Count == Cities.Length)
-                numOfSolutions = 1;
             // Display the results
             bssf = new TSPSolution(Route);
             end = DateTime.Now;
@@ -994,14 +993,268 @@ namespace TSP
         {
             string[] results = new string[3];
 
-            // TODO: Add your implementation for your advanced solver here.
-           
-            results[COST] = "not implemented";    // load results into array here, replacing these dummy values
-            results[TIME] = "-1";
-            results[COUNT] = "1";
+            // Initialize the time variable to stop after the time limit, which is defaulted to 60 seconds
+            /* This part of the code takes O(1) space and time as we are just initializing some data */
+            DateTime start = DateTime.Now;
+            DateTime end = start.AddSeconds(time_limit / 1000);
+            Random random = new Random();
+            Route = new ArrayList();
+
+            // Generate minimum spanning tree
+            MST mst = kruskalGenerateMST();
+
+            // Find solution by running a preorder traversal of mst
+            Route = preorderTraversal(mst);
+
+            // Display the results
+            bssf = new TSPSolution(Route);
+            end = DateTime.Now;
+            TimeSpan diff = end - start;
+            double seconds = diff.TotalSeconds;
+            //results[COST] = System.Convert.ToString(bssf.costOfRoute());    // load results into array here, replacing these dummy values
+            ///////////// FOR DEBUGGING //////////////
+            //greedySolveProblem();
+            ///////////// FOR DEBUGGING //////////////
+            results[COST] = System.Convert.ToString(bssf.costOfRoute());
+            results[TIME] = System.Convert.ToString(seconds);
+            results[COUNT] = System.Convert.ToString(0);
 
             return results;
         }
+
+        public MST kruskalGenerateMST()
+        {   
+            // populates list of distances
+            List<KruskalState> cost_table = new List<KruskalState>();
+            for (int i = 0; i < Cities.Length; i++)
+            {
+                for (int j = 0; j < Cities.Length; j++)
+                {
+                    KruskalState state = new KruskalState(Cities[i], Cities[j]);
+                    if (i == j)
+                    {
+                        state.setCost(double.PositiveInfinity);
+                    }
+                    cost_table.Add(state);
+                }
+            }
+
+            // sort list: O(n^2), worst case. Average case likely O(logn), assuming LINQ implements quicksort under-the-hood
+            cost_table = cost_table.OrderBy(State => State.cost).ToList();
+
+            // print and check
+            foreach (KruskalState s in cost_table)
+            {
+                //s.printState();
+            }
+
+            // FIND MST
+
+            // initialize mst to contain the smallest edge
+            MST mst = new MST();
+            mst.root = new MSTNode(cost_table.ElementAt(0).startCity);
+            mst.root.addChild(new MSTNode(cost_table.ElementAt(0).endCity));
+            MSTNode curNode = null;
+
+            cost_table.RemoveAt(0);
+
+            // create container of cities in the tree for convenience later on
+            ArrayList citiesInMst = new ArrayList();
+            citiesInMst.Add(mst.root.getCity());
+            citiesInMst.Add(mst.root.getChildren().ElementAt(0).getCity()); // root only has one child
+
+            while (citiesInMst.Count < Cities.Length) // grow mst one city at a time until it connects each city (until its size is Cities.length)
+            {
+                foreach (KruskalState curEdge in cost_table) // iterate across remaining (unused) edges from shortest to longest
+                {
+                    curNode = mst.findNode(curEdge.startCity);
+                    if (curNode != null) // if the start of current edge is already in the tree (expand the current tree, no parallel tree growth for this algorithm)...
+                    {
+                        if (!citiesInMst.Contains(curNode.getCity())) // double check.... no really, if curNode is not in the graph, I screwed up, skip this node
+                        {
+                            continue;
+                        }
+                        //if (mst.findNode(curEdge.endCity) == null) // only if the end of current edge is NOT in the tree (no cycles allowed)...
+                        if(!citiesInMst.Contains(curEdge.endCity))
+                        {
+                            curNode.addChild(new MSTNode(curEdge.endCity));
+                            citiesInMst.Add(curEdge.endCity);
+                            cost_table.Remove(curEdge); // O() complexity?
+                            break;
+                        }
+                    }
+                }
+            }
+
+            /*
+             * // I couldn't get the draw to work right, but I manually stepped through a minimum spanning tree with a problem of size 5 and the MST looked accurate
+            ////////// DEBUG TEMPORARY DRAW MST //////////
+            ArrayList mstFakeRoute = new ArrayList();
+            foreach (KruskalState curEdge in mst)
+            {
+                mstFakeRoute.Add(curEdge.startCity);
+            }
+            mstFakeRoute.Add(mst.Last().endCity);
+            bssf = new TSPSolution(mstFakeRoute);
+            ////////// DEBUG TEMPORARY DRAW MST //////////
+            */
+            return mst;
+        }
+
+        public ArrayList preorderTraversal(MST mst)
+        {
+            // initialize path with root of mst
+            ArrayList path = new ArrayList();
+            MSTNode curNode = mst.root;
+
+            // recurse into tree
+            path = preorderTraversalRecursive(curNode, path);
+
+            return path;
+        }
+
+        private ArrayList preorderTraversalRecursive(MSTNode curNode, ArrayList path)
+        {
+            // visit curNode first (because this is preorder)
+            path.Add(curNode.getCity());
+
+            // BASE CASE if no children, return path
+            if (curNode.getChildren().Count == 0)
+            {
+                return path;
+            }
+
+            // recursively visit each child
+            foreach (MSTNode curChild in curNode.getChildren())
+            {
+                ArrayList subPath = new ArrayList();
+                subPath = preorderTraversalRecursive(curChild, subPath);
+                for (int i = 0; i < subPath.Count; i++)
+                {
+                    path.Add(subPath[i]);
+                }
+            }
+
+            return path;
+        }
+
+        public class KruskalState
+        {
+            public City startCity;
+            public City endCity;
+            public double cost;
+
+            public KruskalState(City s, City e)
+            {
+                startCity = s;
+                endCity = e;
+                cost = s.costToGetTo(e);
+            }
+
+            public void setCost(double c) 
+            {
+                cost = c;
+            }
+
+            public void printState()
+            {
+                Console.WriteLine("TESTING: From City " + startCity.GetHashCode() + " to City " + endCity.GetHashCode());
+                if(cost == double.PositiveInfinity){
+                    Console.WriteLine("\tCost: " + "INFINITY");
+                }
+                else{
+                    Console.WriteLine("\tCost: " + cost);
+                }
+                    
+            }
+        }
+
+        public class MSTNode
+        {
+            City city;
+            List<MSTNode> children;
+            public MSTNode(City inCity)
+            {
+                city = inCity;
+                children = new List<MSTNode>();
+            }
+            /*
+            public MSTNode(City inCity, List<MSTNode> inChildren)
+            {
+                city = inCity;
+                children = inChildren;
+            }
+             * */
+            public City getCity() { return city; }
+            public List<MSTNode> getChildren() { return children; }
+            public void addChild(MSTNode child) { children.Add(child); }
+        }
+
+        public class MST
+        {
+            
+            //List<KruskalState> orderedEdges;
+            public MSTNode root;
+
+            public MST()
+            {
+            }
+
+            public MST(MSTNode inRoot)
+            {
+                //orderedEdges = new List<KruskalState>();
+                root = inRoot;
+            }
+
+            public MSTNode findNode(City inCity)
+            {
+                //if (root.getCity().Equals(inCity))
+                /*
+                if(root.getCity() == inCity)
+                {
+                    return root;
+                }
+                 * */
+                //MSTNode toReturn = null;
+                return recFindNode(root, inCity);
+                /*
+                foreach (MSTNode curChild in root.getChildren())
+                {
+                    if (curChild.getCity().Equals(inCity))
+                    {
+                        return curChild;
+                    }
+                    if (curChild.getChildren().Count > 0)
+                    {
+                        toReturn = recFindNode(curChild, inCity);
+                    }
+                    if(toReturn != null){
+                        return toReturn;
+                    }
+                }
+                 * */
+                //return toReturn;
+            }
+
+            public MSTNode recFindNode(MSTNode node, City city)
+            {
+                //if (node.getCity().Equals(city))
+                if(node == null || node.getCity() == city)
+                {
+                    return node;
+                }
+                MSTNode toReturn = null;
+                foreach(MSTNode curChild in node.getChildren()){
+                    if (curChild != null)
+                    {
+                        toReturn = recFindNode(curChild, city);
+                    }
+                }
+                return toReturn;
+            }
+
+        }
+
         #endregion
     }
 
