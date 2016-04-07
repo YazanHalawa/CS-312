@@ -1011,10 +1011,6 @@ namespace TSP
             end = DateTime.Now;
             TimeSpan diff = end - start;
             double seconds = diff.TotalSeconds;
-            //results[COST] = System.Convert.ToString(bssf.costOfRoute());    // load results into array here, replacing these dummy values
-            ///////////// FOR DEBUGGING //////////////
-            //greedySolveProblem();
-            ///////////// FOR DEBUGGING //////////////
             results[COST] = System.Convert.ToString(bssf.costOfRoute());
             results[TIME] = System.Convert.ToString(seconds);
             results[COUNT] = System.Convert.ToString(0);
@@ -1042,14 +1038,7 @@ namespace TSP
             // sort list: O(n^2), worst case. Average case likely O(logn), assuming LINQ implements quicksort under-the-hood
             cost_table = cost_table.OrderBy(State => State.cost).ToList();
 
-            // print and check
-            foreach (KruskalState s in cost_table)
-            {
-                //s.printState();
-            }
-
             // FIND MST
-
             // initialize mst to contain the smallest edge
             MST mst = new MST();
             mst.root = new MSTNode(cost_table.ElementAt(0).startCity);
@@ -1074,7 +1063,7 @@ namespace TSP
                         {
                             continue;
                         }
-                        //if (mst.findNode(curEdge.endCity) == null) // only if the end of current edge is NOT in the tree (no cycles allowed)...
+                        // only if the end of current edge is NOT in the tree (no cycles allowed)...
                         if(!citiesInMst.Contains(curEdge.endCity))
                         {
                             curNode.addChild(new MSTNode(curEdge.endCity));
@@ -1085,19 +1074,6 @@ namespace TSP
                     }
                 }
             }
-
-            /*
-             * // I couldn't get the draw to work right, but I manually stepped through a minimum spanning tree with a problem of size 5 and the MST looked accurate
-            ////////// DEBUG TEMPORARY DRAW MST //////////
-            ArrayList mstFakeRoute = new ArrayList();
-            foreach (KruskalState curEdge in mst)
-            {
-                mstFakeRoute.Add(curEdge.startCity);
-            }
-            mstFakeRoute.Add(mst.Last().endCity);
-            bssf = new TSPSolution(mstFakeRoute);
-            ////////// DEBUG TEMPORARY DRAW MST //////////
-            */
             return mst;
         }
 
@@ -1178,13 +1154,6 @@ namespace TSP
                 city = inCity;
                 children = new List<MSTNode>();
             }
-            /*
-            public MSTNode(City inCity, List<MSTNode> inChildren)
-            {
-                city = inCity;
-                children = inChildren;
-            }
-             * */
             public City getCity() { return city; }
             public List<MSTNode> getChildren() { return children; }
             public void addChild(MSTNode child) { children.Add(child); }
@@ -1193,7 +1162,6 @@ namespace TSP
         public class MST
         {
             
-            //List<KruskalState> orderedEdges;
             public MSTNode root;
 
             public MST()
@@ -1202,43 +1170,16 @@ namespace TSP
 
             public MST(MSTNode inRoot)
             {
-                //orderedEdges = new List<KruskalState>();
                 root = inRoot;
             }
 
             public MSTNode findNode(City inCity)
             {
-                //if (root.getCity().Equals(inCity))
-                /*
-                if(root.getCity() == inCity)
-                {
-                    return root;
-                }
-                 * */
-                //MSTNode toReturn = null;
                 return recFindNode(root, inCity);
-                /*
-                foreach (MSTNode curChild in root.getChildren())
-                {
-                    if (curChild.getCity().Equals(inCity))
-                    {
-                        return curChild;
-                    }
-                    if (curChild.getChildren().Count > 0)
-                    {
-                        toReturn = recFindNode(curChild, inCity);
-                    }
-                    if(toReturn != null){
-                        return toReturn;
-                    }
-                }
-                 * */
-                //return toReturn;
             }
 
             public MSTNode recFindNode(MSTNode node, City city)
             {
-                //if (node.getCity().Equals(city))
                 if(node == null || node.getCity() == city)
                 {
                     return node;
