@@ -1000,11 +1000,20 @@ namespace TSP
             Random random = new Random();
             Route = new ArrayList();
 
-            // Generate minimum spanning tree
-            MST mst = kruskalGenerateMST();
+            while (Route.Count != Cities.Length)
+            {
+                // Generate minimum spanning tree
+                MST mst = kruskalGenerateMST();
 
-            // Find solution by running a preorder traversal of mst
-            Route = preorderTraversal(mst);
+                // Find solution by running a preorder traversal of mst
+                Route = preorderTraversal(mst);
+
+                City firstCity = (City)Route[0];
+                City lastCity = (City)Route[Route.Count - 1];
+                if (lastCity.costToGetTo(firstCity) == double.PositiveInfinity)
+                    Route.Clear();
+            }
+            
 
             // Display the results
             bssf = new TSPSolution(Route);
@@ -1035,14 +1044,17 @@ namespace TSP
                 }
             }
 
-            // sort list: O(n^2), worst case. Average case likely O(logn), assuming LINQ implements quicksort under-the-hood
+            // sort list: O(n^2), worst case. Average case likely O(nlogn), assuming LINQ implements quicksort under-the-hood
             cost_table = cost_table.OrderBy(State => State.cost).ToList();
 
             // FIND MST
             // initialize mst to contain the smallest edge
             MST mst = new MST();
-            mst.root = new MSTNode(cost_table.ElementAt(0).startCity);
-            mst.root.addChild(new MSTNode(cost_table.ElementAt(0).endCity));
+            Random random = new Random();
+            //mst.root = new MSTNode(cost_table.ElementAt(0).startCity);
+            int index = random.Next(0, cost_table.Count);
+            mst.root = new MSTNode(cost_table.ElementAt(index).startCity);
+            mst.root.addChild(new MSTNode(cost_table.ElementAt(index).endCity));
             MSTNode curNode = null;
 
             cost_table.RemoveAt(0);
@@ -1059,16 +1071,12 @@ namespace TSP
                     curNode = mst.findNode(curEdge.startCity);
                     if (curNode != null) // if the start of current edge is already in the tree (expand the current tree, no parallel tree growth for this algorithm)...
                     {
-                        if (!citiesInMst.Contains(curNode.getCity())) // double check.... no really, if curNode is not in the graph, I screwed up, skip this node
-                        {
-                            continue;
-                        }
                         // only if the end of current edge is NOT in the tree (no cycles allowed)...
                         if(!citiesInMst.Contains(curEdge.endCity))
                         {
                             curNode.addChild(new MSTNode(curEdge.endCity));
                             citiesInMst.Add(curEdge.endCity);
-                            cost_table.Remove(curEdge); // O() complexity?
+                            cost_table.Remove(curEdge); // O(n) complexity
                             break;
                         }
                     }
