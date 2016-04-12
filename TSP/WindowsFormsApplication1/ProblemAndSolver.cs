@@ -1003,7 +1003,7 @@ namespace TSP
             while (Route.Count != Cities.Length)
             {
                 // Generate minimum spanning tree
-                MST mst = kruskalGenerateMST();
+                MST mst = primGenerateMST();
 
                 // Find solution by running a preorder traversal of mst
                 Route = preorderTraversal(mst);
@@ -1027,15 +1027,15 @@ namespace TSP
             return results;
         }
 
-        public MST kruskalGenerateMST()
+        public MST primGenerateMST()
         {   
             // populates list of distances
-            List<KruskalState> cost_table = new List<KruskalState>();
+            List<primState> cost_table = new List<primState>();
             for (int i = 0; i < Cities.Length; i++)
             {
                 for (int j = 0; j < Cities.Length; j++)
                 {
-                    KruskalState state = new KruskalState(Cities[i], Cities[j]);
+                    primState state = new primState(Cities[i], Cities[j]);
                     if (i == j)
                     {
                         state.setCost(double.PositiveInfinity);
@@ -1066,7 +1066,7 @@ namespace TSP
 
             while (citiesInMst.Count < Cities.Length) // grow mst one city at a time until it connects each city (until its size is Cities.length)
             {
-                foreach (KruskalState curEdge in cost_table) // iterate across remaining (unused) edges from shortest to longest
+                foreach (primState curEdge in cost_table) // iterate across remaining (unused) edges from shortest to longest
                 {
                     curNode = mst.findNode(curEdge.startCity);
                     if (curNode != null) // if the start of current edge is already in the tree (expand the current tree, no parallel tree growth for this algorithm)...
@@ -1122,13 +1122,13 @@ namespace TSP
             return path;
         }
 
-        public class KruskalState
+        public class primState
         {
             public City startCity;
             public City endCity;
             public double cost;
 
-            public KruskalState(City s, City e)
+            public primState(City s, City e)
             {
                 startCity = s;
                 endCity = e;
